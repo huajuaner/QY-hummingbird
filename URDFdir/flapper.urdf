@@ -1,0 +1,140 @@
+<robot name="flapper">
+  <link name="torso">
+    <inertial>
+      <origin xyz="-3.39095744681197E-06 1.3039607029558E-08 -0.00023956863202956" rpy="0 0 0" />
+      <mass value="0.00798" />
+      <inertia ixx="6.65E-07" ixy="0" ixz="0" iyy="1.022E-06" iyz="0" izz="4.26E-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/torso.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/torso.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="left_wing_rod">
+    <inertial>
+      <origin xyz="0.0313578328002249 -3.25541074132352E-10 -0.00908310143474282" rpy="0 0 0" />
+      <mass value="0.0005184406470588235" />
+      <inertia ixx="4.859705882352944e-08" ixy="0" ixz="-2.712500000000005e-08" iyy="3.7752411764705886e-07" iyz="0" izz="3.456202941176472e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/left_wing_rod.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/left_wing_rod.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_Stroke_joint" type="revolute">
+    <origin xyz="0.016247 0 0.0095033" rpy="0 0 0" />
+    <parent link="torso" />
+    <child link="left_wing_rod" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="left_wing">
+    <inertial>
+      <origin xyz="0.0430555481476358 4.33680868994202E-18 -0.0121666298592543" rpy="0 0 0" />
+      <mass value="1.3280864864864863e-05" />
+      <inertia ixx="1.7439729729729708e-09" ixy="0" ixz="-6.258783783783781e-09" iyy="3.726335135135135e-08" iyz="0" izz="3.551951351351351e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/left_wing.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/left_wing.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_rotate_joint" type="revolute">
+    <origin xyz="0 0 -0.0057" rpy="0 0 0" />
+    <parent link="left_wing_rod" />
+    <child link="left_wing" />
+    <axis xyz="1 0 0" />
+    <limit lower="0" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="right_wing_rod">
+    <inertial>
+      <origin xyz="-0.0313578328002242 3.25541042907329E-10 -0.00908310143474286" rpy="0 0 0" />
+      <mass value="0.0005184406470588235" />
+      <inertia ixx="4.859705882352944e-08" ixy="0" ixz="2.712500000000005e-08" iyy="3.7752411764705886e-07" iyz="0" izz="3.456202941176472e-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/right_wing_rod.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/right_wing_rod.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_stroke_joint" type="revolute">
+    <origin xyz="-0.016253 0 0.0095033" rpy="0 0 0" />
+    <parent link="torso" />
+    <child link="right_wing_rod" />
+    <axis xyz="0 0 1" />
+    <limit lower="0" upper="0" effort="0" velocity="0" />
+  </joint>
+  <link name="right_wing">
+    <inertial>
+      <origin xyz="-0.0430555481476357 6.07153216591882E-18 -0.0121666298592543" rpy="0 0 0" />
+      <mass value="1.3280864864864863e-05" />
+      <inertia ixx="1.7439729729729708e-09" ixy="0" ixz="6.258783783783781e-09" iyy="3.726335135135135e-08" iyz="0" izz="3.551951351351351e-08" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/right_wing.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="../meshes/right_wing.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_rotate_joint" type="revolute">
+    <origin xyz="0 0 -0.0057" rpy="0 0 0" />
+    <parent link="right_wing_rod" />
+    <child link="right_wing" />
+    <axis xyz="-1 0 0" />
+    <limit lower="0" upper="0" effort="0" velocity="0" />
+  </joint>
+</robot>
