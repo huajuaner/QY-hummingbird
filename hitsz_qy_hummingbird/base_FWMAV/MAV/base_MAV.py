@@ -201,7 +201,6 @@ class BaseMAV:
         self.left_rotate_vel = vel
 
     def joint_control(self,
-                      control_mode,
                       target_right_stroke_amp=None,
                       target_right_stroke_vel=None,
                       target_left_stroke_amp=None,
@@ -211,13 +210,10 @@ class BaseMAV:
         """
         the motor is controlled according to the control mode
         """
-        if control_mode == p.POSITION_CONTROL:
-            if target_right_stroke_amp is None or target_right_stroke_vel is None or target_left_stroke_amp is None or target_left_stroke_vel is None:
-                raise ValueError(
-                    f'the joint control is not used correctly, in Position Control both the position and the velocity is required')
+        if target_right_stroke_amp is not None and target_right_stroke_vel is not None and target_left_stroke_amp is not None and target_left_stroke_vel is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
-                                    controlMode=control_mode,
+                                    controlMode=p.POSITION_CONTROL,
                                     targetPosition=target_right_stroke_amp,
                                     targetVelocity=target_right_stroke_vel,
                                     force=self.params.max_force,
@@ -227,7 +223,7 @@ class BaseMAV:
 
             p.setJointMotorControl2(self.body_unique_id,
                                     self.left_stroke_joint,
-                                    controlMode=control_mode,
+                                    controlMode=p.POSITION_CONTROL,
                                     targetPosition=target_left_stroke_amp,
                                     targetVelocity=target_left_stroke_vel,
                                     force=self.params.max_force,
@@ -235,33 +231,29 @@ class BaseMAV:
                                     velocityGain=self.params.velocity_gain,
                                     maxVelocity=self.params.max_joint_velocity)
 
-        elif control_mode == p.VELOCITY_CONTROL:
-            if target_right_stroke_vel is None or target_right_stroke_vel is None:
-                raise ValueError(f'the joint control is not used correctly')
+        if target_right_stroke_vel is not None and target_right_stroke_vel is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
-                                    controlMode=control_mode,
+                                    controlMode=p.VELOCITY_CONTROL,
                                     targetVelocity=target_right_stroke_vel,
                                     force=self.params.max_force,
                                     maxVelocity=self.params.max_joint_velocity)
             p.setJointMotorControl2(self.body_unique_id,
                                     self.left_stroke_joint,
-                                    controlMode=control_mode,
+                                    controlMode=p.VELOCITY_CONTROL,
                                     targetVelocity=target_left_stroke_vel,
                                     force=self.params.max_force,
                                     maxVelocity=self.params.max_joint_velocity)
 
-        elif control_mode == p.TORQUE_CONTROL:
-            if right_input_torque is None or left_input_torque is None:
-                raise ValueError(f'the joint control is not used correctly')
+        if right_input_torque is not None and left_input_torque is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
-                                    controlMode=control_mode,
+                                    controlMode=p.TORQUE_CONTROL,
                                     force=right_input_torque,
                                     maxVelocity=self.params.max_joint_velocity)
             p.setJointMotorControl2(self.body_unique_id,
                                     self.left_stroke_joint,
-                                    controlMode=control_mode,
+                                    controlMode=p.TORQUE_CONTROL,
                                     force=left_input_torque,
                                     maxVelocity=self.params.max_joint_velocity)
 
@@ -348,7 +340,7 @@ class BaseMAV:
                                    force: np.ndarray):
         """
         """
-        if force.dot(force) == 0 :
+        if force.dot(force) == 0:
             return
         pos = p.getLinkState(self.body_unique_id,
                              link_id)[4]
@@ -358,21 +350,21 @@ class BaseMAV:
                              posObj=pos + position_bias,
                              flags=p.WORLD_FRAME)
         self.draw_a_line(pos,
-                         pos+position_bias,
-                         [1,0,0],
+                         pos + position_bias,
+                         [1, 0, 0],
                          f'{link_id}')
 
     def set_link_torque_world_frame(self,
                                     linkid,
-                                    torque:np.ndarray):
+                                    torque: np.ndarray):
         """
         """
-        if torque.dot(torque) == 0 :
+        if torque.dot(torque) == 0:
             return
         p.applyExternalTorque(self.body_unique_id,
                               linkid,
-                              forceObj = torque,
-                              flags = p.WORLD_FRAME)
+                              forceObj=torque,
+                              flags=p.WORLD_FRAME)
 
     def draw_a_line(self,
                     start,

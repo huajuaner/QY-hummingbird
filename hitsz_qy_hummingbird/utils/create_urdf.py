@@ -1,3 +1,5 @@
+import os.path
+
 import pandas as pd
 import xml.etree.ElementTree as ET
 from sklearn.preprocessing import StandardScaler
@@ -24,6 +26,13 @@ class URDFCreator:
         self.linear_regression_for_wing = None
         self.scaler_rod = None
         self.linear_regression_for_rod = None
+
+        self.model_path = GLOBAL_CONFIGURATION.urdf_folder_path + 'model.pkl'
+        if os.path.exists(self.model_path):
+            self.load_model()
+        else:
+            self.dump_model()
+        self.urdf_name = None
 
     def dump_model(self):
         filepath = GLOBAL_CONFIGURATION.urdf_folder_path
@@ -73,11 +82,13 @@ class URDFCreator:
             self.scaler_rod = pickle.load(f)
             self.linear_regression_for_rod = pickle.load(f)
 
-    def write_the_urdf(self,
-                       filename):
+    def write_the_urdf(self):
         """
-        :return the body inertia and the body mass
+        the body inertia and the body mass
         """
+        self.urdf_name = f"{GLOBAL_CONFIGURATION.temporary_urdf_path}R_{self.r}_CR_{self.chord_root}_CT_{self.chord_tip}.urdf"
+        if os.path.exists(self.urdf_name):
+            return self.urdf_name
 
         r = self.r * 1000
         ct = self.chord_tip * 1000
@@ -142,6 +153,5 @@ class URDFCreator:
         rw_iner.attrib["izz"] = wzz
         rw_iner.attrib["ixz"] = wxz
 
-        tree.write(GLOBAL_CONFIGURATION.temporary_urdf_path + filename)
-
-        return float(rzz) + float(wzz), 7.98 + float(wm) * 2 + float(rm) * 2
+        tree.write(self.urdf_name)
+        return self.urdf_name
