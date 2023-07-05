@@ -380,6 +380,11 @@ class BaseMAV:
                                                           lineColorRGB=line_color,
                                                           replaceItemUniqueId=self.data["debugliune"]["name"])
 
+    def get_constraint_state(self):
+        if self.if_fixed is False:
+            raise AttributeError("the force&torque sensor is not enabled")
+        return p.getConstraintState(self.constraint_id)
+
     def reset(self):
         """
         reset the base position orientation and velocity

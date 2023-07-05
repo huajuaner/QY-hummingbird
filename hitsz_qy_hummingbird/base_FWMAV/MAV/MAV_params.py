@@ -11,6 +11,7 @@ class ParamsForBaseMAV:
         self.max_joint_velocity = None
         self.initial_xyz = None
         self.initial_rpy = None
+        self.initial_orientation = None
         self.right_stroke_joint = None
         self.left_stroke_joint = None
         self.right_rotate_joint = None
