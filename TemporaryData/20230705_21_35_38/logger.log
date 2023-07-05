@@ -1,0 +1,72 @@
+2023-07-05 21:35:39,769 -  [BaseWing] the length is 0.10559576566307186
+2023-07-05 21:35:39,770 -  [BaseWing] the chord of root is 0.013679980005579979
+2023-07-05 21:35:39,770 -  [BaseWing] the chord of tip is 0.009028786803682786
+2023-07-05 21:35:39,770 -  [BaseWing] the length is 0.10559576566307186
+2023-07-05 21:35:39,770 -  [BaseWing] the chord of root is 0.013679980005579979
+2023-07-05 21:35:39,771 -  [BaseWing] the chord of tip is 0.009028786803682786
+2023-07-05 21:35:39,917 -  [BaseBLDC] right target amplitude is 1.04719755119660
+2023-07-05 21:35:39,918 -  [BaseBLDC] left target amplitude is 1.04719755119660
+2023-07-05 21:35:40,024 -  [BaseBLDC] right stroke amp is 0.10472037557305242
+2023-07-05 21:35:40,025 -  [BaseBLDC] left stroke amp is 0.10471975511965978
+2023-07-05 21:35:40,027 -  [BaseBLDC] right target amplitude is 1.04645353607079
+2023-07-05 21:35:40,028 -  [BaseBLDC] left target amplitude is 1.04645353607079
+2023-07-05 21:35:40,134 -  [BaseBLDC] right stroke amp is 0.29096927669722605
+2023-07-05 21:35:40,134 -  [BaseBLDC] left stroke amp is 0.290967496461505
+2023-07-05 21:35:40,137 -  [BaseBLDC] right target amplitude is 1.04422254791229
+2023-07-05 21:35:40,137 -  [BaseBLDC] left target amplitude is 1.04422254791229
+2023-07-05 21:35:40,246 -  [BaseBLDC] right stroke amp is 0.53364320006772
+2023-07-05 21:35:40,246 -  [BaseBLDC] left stroke amp is 0.5336401317702647
+2023-07-05 21:35:40,249 -  [BaseBLDC] right target amplitude is 1.04050775687551
+2023-07-05 21:35:40,249 -  [BaseBLDC] left target amplitude is 1.04050775687551
+2023-07-05 21:35:40,357 -  [BaseBLDC] right stroke amp is 0.8023273833280941
+2023-07-05 21:35:40,358 -  [BaseBLDC] left stroke amp is 0.8023232941487433
+2023-07-05 21:35:40,360 -  [BaseBLDC] right target amplitude is 1.03531444154575
+2023-07-05 21:35:40,361 -  [BaseBLDC] left target amplitude is 1.03531444154575
+2023-07-05 21:35:40,469 -  [BaseBLDC] right stroke amp is 1.0668935398039414
+2023-07-05 21:35:40,469 -  [BaseBLDC] left stroke amp is 1.0668890175248582
+2023-07-05 21:35:40,472 -  [BaseBLDC] right target amplitude is 1.02864998143846
+2023-07-05 21:35:40,472 -  [BaseBLDC] left target amplitude is 1.02864998143846
+2023-07-05 21:35:40,580 -  [BaseBLDC] right stroke amp is 1.3004821858789224
+2023-07-05 21:35:40,580 -  [BaseBLDC] left stroke amp is 1.3004779895244512
+2023-07-05 21:35:40,583 -  [BaseBLDC] right target amplitude is 1.02052384651324
+2023-07-05 21:35:40,583 -  [BaseBLDC] left target amplitude is 1.02052384651324
+2023-07-05 21:35:40,692 -  [BaseBLDC] right stroke amp is 1.481850567187068
+2023-07-05 21:35:40,692 -  [BaseBLDC] left stroke amp is 1.4818474720929178
+2023-07-05 21:35:40,695 -  [BaseBLDC] right target amplitude is 1.01094758371736
+2023-07-05 21:35:40,695 -  [BaseBLDC] left target amplitude is 1.01094758371736
+2023-07-05 21:35:40,803 -  [BaseBLDC] right stroke amp is 1.596816696674159
+2023-07-05 21:35:40,803 -  [BaseBLDC] left stroke amp is 1.5968152530890014
+2023-07-05 21:35:40,806 -  [BaseBLDC] right target amplitude is 0.999934800577948
+2023-07-05 21:35:40,806 -  [BaseBLDC] left target amplitude is 0.999934800577948
+2023-07-05 21:35:40,914 -  [BaseBLDC] right stroke amp is 1.640618103965268
+2023-07-05 21:35:40,914 -  [BaseBLDC] left stroke amp is 1.6406182832619696
+2023-07-05 21:35:40,917 -  [BaseBLDC] right target amplitude is 0.987501145866170
+2023-07-05 21:35:40,917 -  [BaseBLDC] left target amplitude is 0.987501145866170
+2023-07-05 21:35:41,026 -  [BaseBLDC] right stroke amp is 1.6185804845017397
+2023-07-05 21:35:41,027 -  [BaseBLDC] left stroke amp is 1.6185830476417342
+2023-07-05 21:35:41,029 -  [BaseBLDC] right target amplitude is 0.973664287360898
+2023-07-05 21:35:41,030 -  [BaseBLDC] left target amplitude is 0.973664287360898
+2023-07-05 21:35:41,138 -  [BaseBLDC] right stroke amp is 1.5328010778591352
+2023-07-05 21:35:41,138 -  [BaseBLDC] left stroke amp is 1.532805988517633
+2023-07-05 21:35:41,141 -  [BaseBLDC] right target amplitude is 0.958443886743414
+2023-07-05 21:35:41,141 -  [BaseBLDC] left target amplitude is 0.958443886743414
+2023-07-05 21:35:41,249 -  [BaseBLDC] right stroke amp is 1.3967970981186262
+2023-07-05 21:35:41,250 -  [BaseBLDC] left stroke amp is 1.396803915583597
+2023-07-05 21:35:41,252 -  [BaseBLDC] right target amplitude is 0.941861571658857
+2023-07-05 21:35:41,253 -  [BaseBLDC] left target amplitude is 0.941861571658857
+2023-07-05 21:35:41,360 -  [BaseBLDC] right stroke amp is 1.2275775924062287
+2023-07-05 21:35:41,360 -  [BaseBLDC] left stroke amp is 1.227585546494984
+2023-07-05 21:35:41,363 -  [BaseBLDC] right target amplitude is 0.923940904984112
+2023-07-05 21:35:41,363 -  [BaseBLDC] left target amplitude is 0.923940904984112
+2023-07-05 21:35:41,470 -  [BaseBLDC] right stroke amp is 1.043289724727475
+2023-07-05 21:35:41,471 -  [BaseBLDC] left stroke amp is 1.043297968589273
+2023-07-05 21:35:41,473 -  [BaseBLDC] right target amplitude is 0.904707351345790
+2023-07-05 21:35:41,473 -  [BaseBLDC] left target amplitude is 0.904707351345790
+2023-07-05 21:35:41,580 -  [BaseBLDC] right stroke amp is 0.8616628407425698
+2023-07-05 21:35:41,581 -  [BaseBLDC] left stroke amp is 0.8616704859729483
+2023-07-05 21:35:41,583 -  [BaseBLDC] right target amplitude is 0.884188240935905
+2023-07-05 21:35:41,584 -  [BaseBLDC] left target amplitude is 0.884188240935905
+2023-07-05 21:35:41,692 -  [BaseBLDC] right stroke amp is 0.6983802876190696
+2023-07-05 21:35:41,693 -  [BaseBLDC] left stroke amp is 0.6983864449092986
+2023-07-05 21:35:41,695 -  [BaseBLDC] right target amplitude is 0.862412730676639
+2023-07-05 21:35:41,695 -  [BaseBLDC] left target amplitude is 0.862412730676639

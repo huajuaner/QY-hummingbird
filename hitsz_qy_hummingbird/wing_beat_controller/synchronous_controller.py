@@ -1,26 +1,37 @@
 from sympy import symbols, sin, cos, asin, diff, pi
 from sympy.plotting import plot
+from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
 
 
 class WingBeatProfile:
-    def __init__(self):
+    def __init__(self,
+                 nominal_amplitude=0,
+                 frequency=0,
+                 differential_amplitude=0,
+                 bias_amplitude=0,
+                 split_cycle=0.5,
+                 square_parameter=0.0001):
 
         self.t, self.An, self.fre, self.Adiff, self.Abias, self.Ksplit, self.Ksquare = symbols(
             't An fre Adiff Abias Ksplit Ksquare')
 
         # Right wing expression
-        self.right_expr1 = self.Abias + (self.An + self.Adiff) / asin(self.Ksquare) \
-                           * asin(self.Ksquare * cos(pi * self.fre * self.t / self.Ksplit))
-        self.right_expr2 = self.Abias + (self.An + self.Adiff) / asin(self.Ksquare) \
-                           * asin(
-            self.Ksquare * cos((self.fre * pi * self.t + pi - 2 * pi * self.Ksplit) / (1 - self.Ksplit)))
+        self.right_expr1 = (self.Abias
+                            + (self.An + self.Adiff) / asin(self.Ksquare)
+                            * asin(self.Ksquare * sin(pi * self.fre * self.t
+                                                      / self.Ksplit)))
+        self.right_expr2 = (self.Abias +
+                            (self.An + self.Adiff) / asin(self.Ksquare)
+                            * asin(self.Ksquare * sin((self.fre * pi * self.t + pi - 2 * pi * self.Ksplit)
+                                                      / (1 - self.Ksplit))))
 
         # Left wing expression
-        self.left_expr1 = self.Abias + (self.An - self.Adiff) / asin(self.Ksquare) \
-                          * asin(self.Ksquare * cos(pi * self.fre * self.t / self.Ksplit))
-        self.left_expr2 = self.Abias + (self.An - self.Adiff) / asin(self.Ksquare) \
-                          * asin(
-            self.Ksquare * cos((self.fre * pi * self.t + pi - 2 * pi * self.Ksplit) / (1 - self.Ksplit)))
+        self.left_expr1 = (self.Abias - (self.An - self.Adiff) / asin(self.Ksquare)
+                           * asin(self.Ksquare * sin(pi * self.fre * self.t
+                                                     / self.Ksplit)))
+        self.left_expr2 = (self.Abias - (self.An - self.Adiff) / asin(self.Ksquare)
+                           * asin(self.Ksquare * sin((self.fre * pi * self.t + pi - 2 * pi * self.Ksplit)
+                                                     / (1 - self.Ksplit))))
 
         # Differentiate the expressions
         self.right_expr1_diff1 = diff(self.right_expr1, self.t)
@@ -36,12 +47,12 @@ class WingBeatProfile:
         self.left_expr2_diff2 = diff(self.left_expr2, self.t, 2)
 
         # Initialize default values for parameters
-        self.nominal_amplitude = 0
-        self.frequency = 0
-        self.differential_amplitude = 0
-        self.bias_amplitude = 0
-        self.split_cycle = 0.5
-        self.square_parameter = 0
+        self.nominal_amplitude = nominal_amplitude
+        self.frequency = frequency
+        self.differential_amplitude = differential_amplitude
+        self.bias_amplitude = bias_amplitude
+        self.split_cycle = split_cycle
+        self.square_parameter = square_parameter
 
         # Initialize substituted expressions
         self.right_expr1_sub = None
@@ -57,6 +68,8 @@ class WingBeatProfile:
         self.left_expr2_sub_diff1 = None
         self.left_expr1_sub_diff2 = None
         self.left_expr2_sub_diff2 = None
+
+        self.change_parameter()
 
     def change_parameter(self,
                          nominal_amplitude: float = None,
@@ -102,12 +115,13 @@ class WingBeatProfile:
         self.left_expr2_sub_diff1 = self.left_expr2_diff1.subs(mydict)
         self.left_expr2_sub_diff2 = self.left_expr2_diff2.subs(mydict)
 
-    def step(self, time):
+    def step(self):
         """
         Input the time in s
         Return the rightTargetPos, rightTargetVel, rightTargetAcc, leftTargetPos, LeftTargetVel, LeftTargetAcc
         """
-        time = time % (1 / self.frequency)
+        the_time = GLOBAL_CONFIGURATION.TICKTOCK / GLOBAL_CONFIGURATION.TIMESTEP
+        time = the_time % (1 / self.frequency)
         mydict = [(self.t, time)]
 
         if (time * self.frequency) % 1 < self.split_cycle:

@@ -100,7 +100,10 @@ class BaseMAV:
         p.changeDynamics(self.body_unique_id,
                          self.right_wing_link,
                          jointLowerLimit=-1 * self.params.max_angle_of_rotate,
-                         jointUpperLimit=self.params.max_angle_of_rotate,
+                         jointUpperLimit=self.params.max_angle_of_rotate)
+
+        p.changeDynamics(self.body_unique_id,
+                         self.right_wing_link,
                          lateralFriction=0,
                          linearDamping=0,
                          angularDamping=0,
@@ -109,25 +112,34 @@ class BaseMAV:
         p.changeDynamics(self.body_unique_id,
                          self.left_wing_link,
                          jointLowerLimit=-1 * self.params.max_angle_of_rotate,
-                         jointUpperLimit=self.params.max_angle_of_rotate,
+                         jointUpperLimit=self.params.max_angle_of_rotate)
+
+        p.changeDynamics(self.body_unique_id,
+                         self.left_wing_link,
                          lateralFriction=0,
                          linearDamping=0,
                          angularDamping=0,
                          maxJointVelocity=self.params.max_joint_velocity)
 
+        # p.changeDynamics(self.body_unique_id,
+        #                  self.right_rod_link,
+        #                  jointLowerLimit=-1 * self.params.max_angle_of_stroke,
+        #                  jointUpperLimit=self.params.max_angle_of_stroke)
+
         p.changeDynamics(self.body_unique_id,
                          self.right_rod_link,
-                         jointLowerLimit=-1 * self.params.max_angle_of_stroke,
-                         jointUpperLimit=self.params.max_angle_of_stroke,
                          lateralFriction=0,
                          linearDamping=0,
                          angularDamping=0,
                          maxJointVelocity=self.params.max_joint_velocity)
 
+        # p.changeDynamics(self.body_unique_id,
+        #                  self.right_rod_link,
+        #                  jointLowerLimit=-1 * self.params.max_angle_of_stroke,
+        #                  jointUpperLimit=self.params.max_angle_of_stroke,)
+
         p.changeDynamics(self.body_unique_id,
-                         self.right_rod_link,
-                         jointLowerLimit=-1 * self.params.max_angle_of_stroke,
-                         jointUpperLimit=self.params.max_angle_of_stroke,
+                         self.left_rod_link,
                          lateralFriction=0,
                          linearDamping=0,
                          angularDamping=0,
@@ -159,7 +171,7 @@ class BaseMAV:
         """
         position, orientation = p.getBasePositionAndOrientation(self.body_unique_id)
         p.resetDebugVisualizerCamera(cameraDistance=0.3,
-                                     cameYaw=120,
+                                     cameraYaw=120,
                                      cameraPitch=-20,
                                      cameraTargetPosition=position)
 
@@ -211,27 +223,28 @@ class BaseMAV:
         the motor is controlled according to the control mode
         """
         if target_right_stroke_amp is not None and target_right_stroke_vel is not None and target_left_stroke_amp is not None and target_left_stroke_vel is not None:
+
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
                                     controlMode=p.POSITION_CONTROL,
                                     targetPosition=target_right_stroke_amp,
-                                    targetVelocity=target_right_stroke_vel,
+                                    # targetVelocity=target_right_stroke_vel,
                                     force=self.params.max_force,
-                                    positionGain=self.params.position_gain,
-                                    velocityGain=self.params.velocity_gain,
+                                    # positionGain=self.params.position_gain,
+                                    # velocityGain=self.params.velocity_gain,
                                     maxVelocity=self.params.max_joint_velocity)
 
             p.setJointMotorControl2(self.body_unique_id,
                                     self.left_stroke_joint,
                                     controlMode=p.POSITION_CONTROL,
                                     targetPosition=target_left_stroke_amp,
-                                    targetVelocity=target_left_stroke_vel,
+                                    # targetVelocity=target_left_stroke_vel,
                                     force=self.params.max_force,
-                                    positionGain=self.params.position_gain,
-                                    velocityGain=self.params.velocity_gain,
+                                    # positionGain=self.params.position_gain,
+                                    # velocityGain=self.params.velocity_gain,
                                     maxVelocity=self.params.max_joint_velocity)
 
-        if target_right_stroke_vel is not None and target_right_stroke_vel is not None:
+        elif target_right_stroke_vel is not None and target_right_stroke_vel is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
                                     controlMode=p.VELOCITY_CONTROL,
@@ -245,7 +258,7 @@ class BaseMAV:
                                     force=self.params.max_force,
                                     maxVelocity=self.params.max_joint_velocity)
 
-        if right_input_torque is not None and left_input_torque is not None:
+        elif right_input_torque is not None and left_input_torque is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
                                     controlMode=p.TORQUE_CONTROL,
@@ -312,16 +325,15 @@ class BaseMAV:
                 p.getLinkState(self.body_unique_id,
                                self.left_wing_link)[5])).reshape(3, 3)
 
-        # TODO: this need to be determined
         right_r_axis = right_orientation[:, self.params.rotate_axis]
-        right_c_axis = right_orientation[:, self.params.stroke_axis]
-        if right_stroke_angular_velocity.dot(right_c_axis) < 0:
+        right_c_axis = -1 *  right_orientation[:, self.params.stroke_axis]
+        if right_stroke_angular_velocity.dot(right_c_axis) > 0:
             right_z_axis = right_orientation[:, self.params.the_left_axis]
         else:
             right_z_axis = -1 * right_orientation[:, self.params.the_left_axis]
 
-        left_r_axis = left_orientation[:, self.params.rotate_axis]
-        left_c_axis = left_orientation[:, self.params.stroke_axis]
+        left_r_axis = -1 * left_orientation[:, self.params.rotate_axis]
+        left_c_axis = -1 * left_orientation[:, self.params.stroke_axis]
         if left_stroke_angular_velocity.dot(left_c_axis) < 0:
             left_z_axis = left_orientation[:, self.params.the_left_axis]
         else:
@@ -340,17 +352,21 @@ class BaseMAV:
                                    force: np.ndarray):
         """
         """
+        force = np.array(force)
+
         if force.dot(force) == 0:
             return
         pos = p.getLinkState(self.body_unique_id,
                              link_id)[4]
+        pos = np.array(pos)
+        position_bias = np.array(position_bias)
         p.applyExternalForce(self.body_unique_id,
                              link_id,
                              forceObj=force,
                              posObj=pos + position_bias,
                              flags=p.WORLD_FRAME)
-        self.draw_a_line(pos,
-                         pos + position_bias,
+        self.draw_a_line(pos+position_bias,
+                         pos + position_bias+force,
                          [1, 0, 0],
                          f'{link_id}')
 
@@ -359,11 +375,12 @@ class BaseMAV:
                                     torque: np.ndarray):
         """
         """
+        torque = np.array(torque)
         if torque.dot(torque) == 0:
             return
         p.applyExternalTorque(self.body_unique_id,
                               linkid,
-                              forceObj=torque,
+                              torqueObj=torque,
                               flags=p.WORLD_FRAME)
 
     def draw_a_line(self,
@@ -378,7 +395,7 @@ class BaseMAV:
         self.data["debugline"][name] = p.addUserDebugLine(start,
                                                           end,
                                                           lineColorRGB=line_color,
-                                                          replaceItemUniqueId=self.data["debugliune"]["name"])
+                                                          replaceItemUniqueId=self.data["debugline"][name])
 
     def get_constraint_state(self):
         if self.if_fixed is False:

@@ -34,16 +34,23 @@ class ClampedMAV():
         self.right_wing = BaseWing(wing_params)
         self.left_wing = BaseWing(wing_params)
 
+        self.logger = GLOBAL_CONFIGURATION.logger
         self.data = {}
         self.observation = None
 
     def step(self,
              action):
         """
+
         :param action: [
+            right_stroke_amp
+            right_stroke_vel
             right_input_torque
-            left_stroke_torque
+            left_stroke_amp
+            left_stroke_vel
+            left_input_torque
             ]
+
         return observation: [
             right_stroke_amp    right_stroke_vel    right_stroke_acc
             right_input_torque  right_motor_current right_motor_voltage
@@ -52,12 +59,28 @@ class ClampedMAV():
             BodyForce1          BodyForce2          BodyForce3
             BodyTorque1         BodyTorque2         BodyTorque3
             ]
+
             terminated: bool
+
             truncated: bool
         """
-        (right_input_torque, left_stroke_torque) = action
-        self.mav.joint_control(right_input_torque=right_input_torque,
-                               left_input_torque=left_stroke_torque)
+
+        (right_stroke_amp,
+         right_stroke_vel,
+         right_input_torque,
+         left_stroke_amp,
+         left_stroke_vel,
+         left_input_torque) = action
+        self.logger.debug(f'right target amplitude is {right_stroke_amp}')
+        self.logger.debug(f'left target amplitude is {left_stroke_amp}')
+
+        self.mav.joint_control(target_right_stroke_amp=right_stroke_amp,
+                               target_right_stroke_vel=right_stroke_vel,
+                               right_input_torque=right_input_torque,
+                               target_left_stroke_amp=left_stroke_amp,
+                               target_left_stroke_vel=left_stroke_vel,
+                               left_input_torque=left_input_torque)
+
         (right_stroke_angular_velocity, right_rotate_angular_velocity,
          right_c_axis, right_r_axis, right_z_axis,
          left_stroke_angular_velocity, left_rotate_angular_velocity,
@@ -84,6 +107,10 @@ class ClampedMAV():
             position_bias=right_pos_bias,
             force=right_aeroforce
         )
+        self.mav.set_link_torque_world_frame(
+            linkid=self.mav.params.right_wing_link,
+            torque=right_aerotorque
+        )
 
         self.mav.set_link_force_world_frame(
             link_id=self.mav.params.left_wing_link,
@@ -91,10 +118,18 @@ class ClampedMAV():
             force=left_aeroforce
         )
 
+        self.mav.set_link_torque_world_frame(
+            linkid= self.mav.params.left_wing_link,
+            torque=left_aerotorque
+        )
+
         self.mav.step()
 
         (right_stroke_amp, right_stroke_vel, right_stroke_acc, right_torque,
          left_stroke_amp, left_stroke_vel, left_stroke_acc, left_torque) = self.mav.get_state_for_motor_torque()
+
+        self.logger.debug(f'right stroke amp is {right_stroke_amp}')
+        self.logger.debug(f'left stroke amp is {left_stroke_amp}')
 
         self.right_motor.reverse(torque=right_torque,
                                  stroke_angular_amp=right_stroke_amp,
@@ -111,12 +146,13 @@ class ClampedMAV():
         left_motor_voltage = self.left_motor.v
 
         force_info = self.mav.get_constraint_state()
-        return [right_stroke_amp, right_stroke_vel,
+
+        return  [right_stroke_amp, right_stroke_vel,
                 right_stroke_acc, right_torque,
                 right_motor_current, right_motor_voltage,
                 left_stroke_amp, left_stroke_vel,
                 left_stroke_acc, left_torque,
-                left_motor_current, left_motor_voltage] + force_info
+                left_motor_current, left_motor_voltage] + list(force_info)
 
     def reset(self):
         self.mav.reset()

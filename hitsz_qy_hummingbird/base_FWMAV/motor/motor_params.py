@@ -6,17 +6,20 @@ class ParamsForBaseMotor:
         self.torque_constant = None
         self.speed_constant = None
         self.rotor_inertia = None
+        self.nominal_current = None
+        self.nominal_voltage = None
         self.rotor_damping_coeff = None
+        self.wing_damping_coeff = None
+
         self.gear_efficiency = None
         self.gear_ratio = None
-        self.wing_damping_coeff = None
+
         self.spring_youngs_modulus = None
         self.spring_wire_diameter = None
         self.spring_number_of_coils = None
         self.spring_outer_diameter = None
+
         self.spring_constant = None
-        self.nominal_current = None
-        self.nominal_voltage = None
         self.change_parameters(**kwargs)
 
     def change_parameters(self, **kwargs):

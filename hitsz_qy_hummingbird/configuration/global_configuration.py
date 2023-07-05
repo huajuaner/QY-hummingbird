@@ -15,10 +15,17 @@ class MyLogger(logging.Logger):
 
     @staticmethod
     def _get_current_class_name():
-        frame = logging.currentframe()
-        outer_frame = frame.f_back.f_back
-        class_name = outer_frame.f_locals.get('__qualname__')
-        return class_name
+        stack = inspect.stack()
+        frame = stack[1].frame
+        code = frame.f_back.f_code
+        module = inspect.getmodule(code)
+        classes = inspect.getmembers(module, inspect.isclass)
+
+        for name, cls in classes:
+            if code.co_name in cls.__dict__:
+                return name
+
+        return None
 
 class GlobalStorageWrapper:
     def __init__(self):
@@ -68,11 +75,11 @@ class GlobalStorageWrapper:
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
 
-        remark = input("Input The Running Info For logging：")
-
-        # 将备注写入README文件
-        with open(self.logger_path + "README.txt", 'a') as f:
-            f.write(remark + '\n')
+        # remark = input("Input The Running Info For logging：")
+        #
+        # # 将备注写入README文件
+        # with open(self.logger_path + "README.txt", 'a') as f:
+        #     f.write(remark + '\n')
 
         # 将 Handler 添加到 Logger 对象中
         self.logger.addHandler(console_handler)

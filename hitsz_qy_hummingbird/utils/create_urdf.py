@@ -42,13 +42,13 @@ class URDFCreator:
 
         scaler_wing_x = StandardScaler().fit(wing_x)
         standard_wing_x = scaler_wing_x.transform(wing_x)
-        print(scaler_wing_x.get_params())
+        # print(scaler_wing_x.get_params())
 
         linear_regression_for_wing = linear_model.LinearRegression().fit(standard_wing_x, wing_y)
-        print(linear_regression_for_wing.get_params())
+        # print(linear_regression_for_wing.get_params())
 
         predict_wing_y = linear_regression_for_wing.predict(standard_wing_x)
-        print("The R_Square is: ", r2_score(wing_y, predict_wing_y))
+        # print("The R_Square is: ", r2_score(wing_y, predict_wing_y))
 
         rod_df = pd.read_csv(filepath + 'rod.csv')
         rod_x = rod_df[['R', 'R2', 'R3', 'R4', 'Ng', 'Ng2', 'Ng3', 'Ng4']]
@@ -56,13 +56,13 @@ class URDFCreator:
 
         scaler_rod_x = StandardScaler().fit(rod_x)
         standard_rod_x = scaler_rod_x.transform(rod_x)
-        print(scaler_rod_x.get_params())
+        # print(scaler_rod_x.get_params())
 
         linear_regression_for_rod = linear_model.LinearRegression().fit(standard_rod_x, rod_y)
-        print(linear_regression_for_rod.get_params())
+        # print(linear_regression_for_rod.get_params())
 
         predict_rod_y = linear_regression_for_rod.predict(standard_rod_x)
-        print("The R_Square is: ", r2_score(rod_y, predict_rod_y))
+        # print("The R_Square is: ", r2_score(rod_y, predict_rod_y))
 
         self.scaler_wing = scaler_wing_x
         self.scaler_rod = scaler_rod_x

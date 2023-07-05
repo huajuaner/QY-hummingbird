@@ -5,23 +5,22 @@ from sympy import Symbol
 from math import sin, cos, tan, pi, asin, acos
 from scipy import integrate
 
+
 class ParamsForBaseWing:
     def __init__(self,
                  aspect_ratio,
                  taper_ratio,
                  r22,
                  camber_angle,
-                 resolution,
-                 rho_air,
-                 Crd):
+                 resolution):
 
         self.aspect_ratio = aspect_ratio
         self.taper_ratio = taper_ratio
         self.r22 = r22
         self.camber_angle = camber_angle
         self.resolution = resolution
-        self.rho_air = rho_air
-        self.Crd = Crd
+        self.rho_air = 1.1800948
+        self.Crd = 5
 
         R = Symbol('R')
         CT = Symbol("CT")

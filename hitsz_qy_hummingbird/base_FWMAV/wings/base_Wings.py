@@ -73,7 +73,7 @@ class BaseWing:
 
     def CN(self, angle_of_attack):
         return cos(angle_of_attack) * self.CL(angle_of_attack) \
-            + sin(angle_of_attack) * self.CN(angle_of_attack)
+            + sin(angle_of_attack) * self.CD(angle_of_attack)
 
     @staticmethod
     def definite_value(vec: np.ndarray):
