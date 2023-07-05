@@ -44,5 +44,5 @@ ParamsForMAV_One = ParamsForBaseMAV(rotate_axis=0,
                                     right_wing_link=1,
                                     left_rod_link=2,
                                     left_wing_link=3,
-                                    position_gain = 1,
-                                    velocity_gain = 0.05)
+                                    position_gain = 0.4,
+                                    velocity_gain = 0.1)
