@@ -228,20 +228,20 @@ class BaseMAV:
                                     self.right_stroke_joint,
                                     controlMode=p.POSITION_CONTROL,
                                     targetPosition=target_right_stroke_amp,
-                                    # targetVelocity=target_right_stroke_vel,
+                                    targetVelocity=target_right_stroke_vel,
                                     force=self.params.max_force,
-                                    # positionGain=self.params.position_gain,
-                                    # velocityGain=self.params.velocity_gain,
+                                    positionGain=self.params.position_gain,
+                                    velocityGain=self.params.velocity_gain,
                                     maxVelocity=self.params.max_joint_velocity)
 
             p.setJointMotorControl2(self.body_unique_id,
                                     self.left_stroke_joint,
                                     controlMode=p.POSITION_CONTROL,
                                     targetPosition=target_left_stroke_amp,
-                                    # targetVelocity=target_left_stroke_vel,
+                                    targetVelocity=target_left_stroke_vel,
                                     force=self.params.max_force,
-                                    # positionGain=self.params.position_gain,
-                                    # velocityGain=self.params.velocity_gain,
+                                    positionGain=self.params.position_gain,
+                                    velocityGain=self.params.velocity_gain,
                                     maxVelocity=self.params.max_joint_velocity)
 
         elif target_right_stroke_vel is not None and target_right_stroke_vel is not None:
@@ -268,6 +268,20 @@ class BaseMAV:
                                     self.left_stroke_joint,
                                     controlMode=p.TORQUE_CONTROL,
                                     force=left_input_torque,
+                                    maxVelocity=self.params.max_joint_velocity)
+        elif target_right_stroke_amp is not None and target_left_stroke_amp is not None:
+            p.setJointMotorControl2(self.body_unique_id,
+                                    self.right_stroke_joint,
+                                    controlMode=p.POSITION_CONTROL,
+                                    targetPosition=target_right_stroke_amp,
+                                    force=self.params.max_force,
+                                    maxVelocity=self.params.max_joint_velocity)
+
+            p.setJointMotorControl2(self.body_unique_id,
+                                    self.left_stroke_joint,
+                                    controlMode=p.POSITION_CONTROL,
+                                    targetPosition=target_left_stroke_amp,
+                                    force=self.params.max_force,
                                     maxVelocity=self.params.max_joint_velocity)
 
     def get_state_for_motor_torque(self):
@@ -326,7 +340,7 @@ class BaseMAV:
                                self.left_wing_link)[5])).reshape(3, 3)
 
         right_r_axis = right_orientation[:, self.params.rotate_axis]
-        right_c_axis = -1 *  right_orientation[:, self.params.stroke_axis]
+        right_c_axis = -1 * right_orientation[:, self.params.stroke_axis]
         if right_stroke_angular_velocity.dot(right_c_axis) > 0:
             right_z_axis = right_orientation[:, self.params.the_left_axis]
         else:
@@ -365,8 +379,8 @@ class BaseMAV:
                              forceObj=force,
                              posObj=pos + position_bias,
                              flags=p.WORLD_FRAME)
-        self.draw_a_line(pos+position_bias,
-                         pos + position_bias+force,
+        self.draw_a_line(pos + position_bias,
+                         pos + position_bias + force,
                          [1, 0, 0],
                          f'{link_id}')
 

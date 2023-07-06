@@ -71,8 +71,6 @@ class ClampedMAV():
          left_stroke_amp,
          left_stroke_vel,
          left_input_torque) = action
-        self.logger.debug(f'right target amplitude is {right_stroke_amp}')
-        self.logger.debug(f'left target amplitude is {left_stroke_amp}')
 
         self.mav.joint_control(target_right_stroke_amp=right_stroke_amp,
                                target_right_stroke_vel=right_stroke_vel,
@@ -127,9 +125,6 @@ class ClampedMAV():
 
         (right_stroke_amp, right_stroke_vel, right_stroke_acc, right_torque,
          left_stroke_amp, left_stroke_vel, left_stroke_acc, left_torque) = self.mav.get_state_for_motor_torque()
-
-        self.logger.debug(f'right stroke amp is {right_stroke_amp}')
-        self.logger.debug(f'left stroke amp is {left_stroke_amp}')
 
         self.right_motor.reverse(torque=right_torque,
                                  stroke_angular_amp=right_stroke_amp,

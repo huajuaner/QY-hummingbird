@@ -4,6 +4,8 @@ from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATIO
 
 
 class WingBeatProfile:
+    # WARNING: the returned target velocity is not continuous
+
     def __init__(self,
                  nominal_amplitude=0,
                  frequency=0,
@@ -34,8 +36,13 @@ class WingBeatProfile:
                                                      / (1 - self.Ksplit))))
 
         # Differentiate the expressions
+
         self.right_expr1_diff1 = diff(self.right_expr1, self.t)
         self.right_expr1_diff2 = diff(self.right_expr1, self.t, 2)
+
+        print(self.right_expr1)
+        print(self.right_expr1_diff1)
+        print(self.right_expr1_diff2)
 
         self.right_expr2_diff1 = diff(self.right_expr2, self.t)
         self.right_expr2_diff2 = diff(self.right_expr2, self.t, 2)
