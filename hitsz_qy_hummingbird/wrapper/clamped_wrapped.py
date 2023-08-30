@@ -28,7 +28,7 @@ class ClampedMAV():
         self.mav = BaseMAV(urdf_name=urdf_name,
                            mav_params=mav_params,
                            if_gui=True,
-                           if_fixed=True)
+                           if_fixed=False)
         self.right_motor = BaseBLDC(motor_params)
         self.left_motor = BaseBLDC(motor_params)
         self.right_wing = BaseWing(wing_params)

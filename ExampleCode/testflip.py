@@ -28,7 +28,7 @@ mav = ClampedMAV(mav_params=configuration.ParamsForMAV_One,
                  wing_params=wing_params)
 
 controller = WingBeatProfile(nominal_amplitude=np.pi / 3,
-                             frequency=30)
+                             frequency=50)
 
 data = {}
 data['right_stroke_amp'] = []
@@ -37,25 +37,14 @@ data['right_stroke_vel'] = []
 data['left_stroke_vel'] = []
 
 cnt = 0
-while cnt < 300:
+while cnt < 3000:
     cnt = cnt + 1
     (right_stroke_amp, right_stroke_vel, _, left_stroke_amp, left_stroke_vel, _) = controller.step()
     data['right_stroke_amp'].append(right_stroke_amp)
     data['left_stroke_amp'].append(left_stroke_amp)
     data['right_stroke_vel'] . append( right_stroke_vel)
     data['left_stroke_vel'] . append( left_stroke_vel)
-    action = [right_stroke_amp, None, None, left_stroke_amp, None, None]
+    action = [right_stroke_amp, None, None, None, None, None]
     mav.step(action=action)
 
 mav.close()
-data = pd.DataFrame(
-    data
-)
-data.to_csv("tem.csv",index = False)
-plt.plot(data.index, data['right_stroke_amp'], label='Right Stroke Amp')
-plt.plot(data.index, data['left_stroke_amp'], label='Left Stroke Amp')
-plt.xlabel('Index')
-plt.ylabel('Amplitude')
-plt.title('Stroke Amplitude')
-plt.legend()
-plt.show()
