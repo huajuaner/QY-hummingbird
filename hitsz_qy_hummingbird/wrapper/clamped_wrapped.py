@@ -31,6 +31,7 @@ class ClampedMAV():
                            mav_params=mav_params,
                            if_gui=if_gui,
                            if_fixed=if_fixed)
+
         self.right_motor = BaseBLDC(motor_params)
         self.left_motor = BaseBLDC(motor_params)
         self.right_wing = BaseWing(wing_params)

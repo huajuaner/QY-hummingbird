@@ -108,7 +108,7 @@ class WingBeatProfile:
                   (self.Abias, self.bias_amplitude),
                   (self.Ksplit, self.split_cycle),
                   (self.Ksquare, self.square_parameter),
-                  (pi, 3.1414926)]
+                  (pi, 3.1415926)]
 
         self.right_expr1_sub = self.right_expr1.subs(mydict)
         self.right_expr1_sub_diff1 = self.right_expr1_diff1.subs(mydict)
