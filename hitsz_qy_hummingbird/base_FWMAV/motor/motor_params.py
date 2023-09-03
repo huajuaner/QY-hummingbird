@@ -43,6 +43,15 @@ class ParamsForBaseMotor:
             # TODO: Calculate the spring constant based on the provided parameters
             self.spring_constant = 2 * self.spring_wire_diameter ** 4 \
                                    / (67 * self.spring_number_of_coils * self.spring_outer_diameter) * 100
+            """
+            The Calculation is K_s = E * d ^ 4 / ( 64 * outer_diameter * number_of_winding)
+            For Purdue Univ, E is 193Gpa which is 193 for calculation
+            wire diameter d is 0.3mm 
+            outer diameter D is 2.67mm 
+            number of winding n is 4.25 
+            The k_s is 0.0022 Nm/rad  
+            """
+
         else:
             raise ValueError("Cannot calculate spring constant. Missing parameters.")
 
