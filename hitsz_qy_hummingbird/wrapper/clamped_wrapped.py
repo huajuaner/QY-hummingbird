@@ -18,7 +18,9 @@ class ClampedMAV():
     def __init__(self,
                  mav_params: ParamsForBaseMAV,
                  motor_params: ParamsForBaseMotor,
-                 wing_params: ParamsForBaseWing):
+                 wing_params: ParamsForBaseWing,
+                 if_gui,
+                 if_fixed):
         urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
                                    r=wing_params.length,
                                    chord_root=wing_params.chord_root,
@@ -27,8 +29,9 @@ class ClampedMAV():
 
         self.mav = BaseMAV(urdf_name=urdf_name,
                            mav_params=mav_params,
-                           if_gui=True,
-                           if_fixed=False)
+                           if_gui=if_gui,
+                           if_fixed=if_fixed)
+
         self.right_motor = BaseBLDC(motor_params)
         self.left_motor = BaseBLDC(motor_params)
         self.right_wing = BaseWing(wing_params)
