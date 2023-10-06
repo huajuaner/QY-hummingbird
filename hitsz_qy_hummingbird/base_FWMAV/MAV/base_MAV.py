@@ -16,7 +16,10 @@ class BaseMAV:
                  urdf_name: str,
                  mav_params: ParamsForBaseMAV,
                  if_gui: bool,
-                 if_fixed: bool):
+                 if_fixed: bool,
+                 if_noise: bool = False,
+                 if_constrained: bool = False):
+
         """
         the urdf should be loaded and the variables should be set up
         the joints and rods are defined accordingly,
@@ -25,7 +28,29 @@ class BaseMAV:
 
         self.params = mav_params
         self.params.initial_orientation = p.getQuaternionFromEuler(self.params.initial_rpy)
-        self.data = {}
+        self.data = {
+            'right_stroke_amp_lis': [],
+            'right_stroke_vel_lis': [],
+            'left_stroke_amp_lis': [],
+            'left_stroke_vel_lis': [],
+            'right_rotate_amp_lis': [],
+            'left_rotate_amp_lis': [],
+            'target_right_stroke_amp_lis': [],
+            'target_left_stroke_amp_lis': [],
+            'target_right_stroke_vel_lis': [],
+            'target_left_stroke_vel_lis': [],
+            'right_torque_without_SpringandDamping': [],
+            'left_torque_without_SpringandDamping': [],
+            'x_force': [],
+            'y_force': [],
+            'z_force': [],
+            'x_torque': [],
+            'y_torque': [],
+            'z_torque': [],
+            'base_pos': [],
+            'base_ori': []
+        }
+
         self.logger = GLOBAL_CONFIGURATION.logger
 
         self.right_stroke_joint = self.params.right_stroke_joint
@@ -61,9 +86,10 @@ class BaseMAV:
             self.physics_client = p.connect(p.GUI)
         else:
             self.physics_client = p.connect(p.DIRECT)
-        #COV_ENABLE_RGB_BUFFER_PREVIEW：Enable or disable RGB buffer preview.
-        #COV_ENABLE_DEPTH_BUFFER_PREVIEW：Enable or disable depth buffer preview.
-        #COV_ENABLE_SEGMENTATION_MARK_PREVIEW：Enable or disable segmentation mark preview.
+
+        # COV_ENABLE_RGB_BUFFER_PREVIEW：Enable or disable RGB buffer preview.
+        # COV_ENABLE_DEPTH_BUFFER_PREVIEW：Enable or disable depth buffer preview.
+        # COV_ENABLE_SEGMENTATION_MARK_PREVIEW：Enable or disable segmentation mark preview.
         p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
         p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
@@ -114,14 +140,12 @@ class BaseMAV:
                                                     parentFramePosition=[0, 0, 0],
                                                     childFramePosition=self.params.initial_xyz,
                                                     childFrameOrientation=self.params.initial_orientation)
-        
+
         self.camera_follow()
+        self.change_joint_dynamics()
 
-        #Use changeDynamics to change properties.
-        #change the lower limit of a joint, also requires
-        #jointUpperLimit otherwise it is ignored. note that at
-        #the moment, the joint limits are not updated in
-        #'getJointInfo'!
+    def change_joint_dynamics(self):
+
         p.changeDynamics(self.body_unique_id,
                          self.right_wing_link,
                          jointLowerLimit=-1 * self.params.max_angle_of_rotate,
@@ -131,8 +155,7 @@ class BaseMAV:
                          self.right_wing_link,
                          lateralFriction=0,
                          linearDamping=0,
-                         angularDamping=0,
-                         maxJointVelocity=self.params.max_joint_velocity)
+                         angularDamping=0)
 
         p.changeDynamics(self.body_unique_id,
                          self.left_wing_link,
@@ -143,52 +166,41 @@ class BaseMAV:
                          self.left_wing_link,
                          lateralFriction=0,
                          linearDamping=0,
-                         angularDamping=0,
-                         maxJointVelocity=self.params.max_joint_velocity)
-
-        # p.changeDynamics(self.body_unique_id,
-        #                  self.right_rod_link,
-        #                  jointLowerLimit=-1 * self.params.max_angle_of_stroke,
-        #                  jointUpperLimit=self.params.max_angle_of_stroke)
+                         angularDamping=0)
 
         p.changeDynamics(self.body_unique_id,
                          self.right_rod_link,
                          lateralFriction=0,
                          linearDamping=0,
-                         angularDamping=0,
-                         maxJointVelocity=self.params.max_joint_velocity)
-
-        # p.changeDynamics(self.body_unique_id,
-        #                  self.right_rod_link,
-        #                  jointLowerLimit=-1 * self.params.max_angle_of_stroke,
-        #                  jointUpperLimit=self.params.max_angle_of_stroke,)
+                         angularDamping=0)
 
         p.changeDynamics(self.body_unique_id,
                          self.left_rod_link,
                          lateralFriction=0,
                          linearDamping=0,
-                         angularDamping=0,
-                         maxJointVelocity=self.params.max_joint_velocity)
-        
-        p.setJointMotorControl2(self.body_unique_id,
-                                self.right_stroke_joint,
-                                controlMode=p.VELOCITY_CONTROL,
-                                force=0)
-
-        p.setJointMotorControl2(self.body_unique_id,
-                                self.left_stroke_joint,
-                                controlMode=p.VELOCITY_CONTROL,
-                                force=0)
+                         angularDamping=0)
 
         p.setJointMotorControl2(self.body_unique_id,
                                 self.right_rotate_joint,
                                 controlMode=p.VELOCITY_CONTROL,
                                 force=0)
-
         p.setJointMotorControl2(self.body_unique_id,
                                 self.left_rotate_joint,
                                 controlMode=p.VELOCITY_CONTROL,
                                 force=0)
+
+        p.changeDynamics(self.body_unique_id,
+                         self.right_rod_link,
+                         maxJointVelocity=self.params.max_joint_velocity)
+        p.changeDynamics(self.body_unique_id,
+                         self.left_rod_link,
+                         maxJointVelocity=self.params.max_joint_velocity)
+        p.changeDynamics(self.body_unique_id,
+                         self.right_wing_link,
+                         maxJointVelocity=self.params.max_joint_velocity)
+        p.changeDynamics(self.body_unique_id,
+                         self.left_wing_link,
+                         maxJointVelocity=self.params.max_joint_velocity)
 
     def camera_follow(self):
         """
@@ -205,11 +217,14 @@ class BaseMAV:
         The torque and the force are applied, and the influence is calculated
         the
         """
-        GLOBAL_CONFIGURATION.TICKTOCK = GLOBAL_CONFIGURATION.TICKTOCK + 1
+        pos, ori = p.getBasePositionAndOrientation(self.body_unique_id)
+        self.data['base_pos'].append(pos)
+        self.data['base_ori'].append(ori)
+
         p.stepSimulation()
         self.camera_follow()
+
         time.sleep(self.params.sleep_time)
-        self.joint_state_update()
 
     def joint_state_update(self):
         """
@@ -237,6 +252,13 @@ class BaseMAV:
         self.left_rotate_amp = pos
         self.left_rotate_vel = vel
 
+        self.data['right_stroke_amp_lis'].append(self.right_stroke_amp)
+        self.data['right_stroke_vel_lis'].append(self.right_stroke_vel)
+        self.data['right_rotate_amp_lis'].append(self.right_rotate_amp)
+        self.data['left_stroke_amp_lis'].append(self.left_stroke_amp)
+        self.data['left_stroke_vel_lis'].append(self.left_stroke_vel)
+        self.data['left_rotate_amp_lis'].append(self.left_rotate_amp)
+
     def joint_control(self,
                       target_right_stroke_amp=None,
                       target_right_stroke_vel=None,
@@ -244,12 +266,19 @@ class BaseMAV:
                       target_left_stroke_vel=None,
                       right_input_torque=None,
                       left_input_torque=None):
+
         """
         the motor is controlled according to the control mode
         """
-        #The practical implementation of the motor controller for POSITION_CONTROL and VELOCITY_CONTROL is used as a constraint. 
+        # The practical implementation of the motor controller for POSITION_CONTROL and VELOCITY_CONTROL is used as a constraint.
         # The parameters positionGain and velocityGain are used to minimize the error, error =position_gain*(desired_position-actual_position)+velocity_gain*(desired_velocity-actual_velocity)
-        if target_right_stroke_amp is not None and target_right_stroke_vel is not None and target_left_stroke_amp is not None and target_left_stroke_vel is not None:
+
+        # There will be some fatal delay for POSITION_CONTROL if the velocity is not given
+
+        if target_right_stroke_amp is not None \
+                and target_right_stroke_vel is not None \
+                and target_left_stroke_amp is not None \
+                and target_left_stroke_vel is not None:
 
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
@@ -257,8 +286,8 @@ class BaseMAV:
                                     targetPosition=target_right_stroke_amp,
                                     targetVelocity=target_right_stroke_vel,
                                     force=self.params.max_force,
-                                    positionGain=self.params.position_gain,
-                                    velocityGain=self.params.velocity_gain,
+                                    # positionGain=self.params.position_gain,
+                                    # velocityGain=self.params.velocity_gain,
                                     maxVelocity=self.params.max_joint_velocity)
 
             p.setJointMotorControl2(self.body_unique_id,
@@ -267,11 +296,34 @@ class BaseMAV:
                                     targetPosition=target_left_stroke_amp,
                                     targetVelocity=target_left_stroke_vel,
                                     force=self.params.max_force,
-                                    positionGain=self.params.position_gain,
-                                    velocityGain=self.params.velocity_gain,
+                                    # positionGain=self.params.position_gain,
+                                    # velocityGain=self.params.velocity_gain,
+                                    maxVelocity=self.params.max_joint_velocity)
+            self.data['target_right_stroke_amp_lis'].append(target_right_stroke_amp)
+            self.data['target_right_stroke_vel_lis'].append(target_right_stroke_vel)
+            self.data['target_left_stroke_amp_lis'].append(target_left_stroke_amp)
+            self.data['target_left_stroke_vel_lis'].append(target_left_stroke_vel)
+
+        elif target_right_stroke_amp is not None \
+                and target_left_stroke_amp is not None:
+            p.setJointMotorControl2(self.body_unique_id,
+                                    self.right_stroke_joint,
+                                    controlMode=p.POSITION_CONTROL,
+                                    targetPosition=target_right_stroke_amp,
+                                    force=self.params.max_force,
                                     maxVelocity=self.params.max_joint_velocity)
 
-        elif target_right_stroke_vel is not None and target_left_stroke_vel is not None:
+            p.setJointMotorControl2(self.body_unique_id,
+                                    self.left_stroke_joint,
+                                    controlMode=p.POSITION_CONTROL,
+                                    targetPosition=target_left_stroke_amp,
+                                    force=self.params.max_force,
+                                    maxVelocity=self.params.max_joint_velocity)
+            self.data['target_right_stroke_amp_lis'].append(target_right_stroke_amp)
+            self.data['target_left_stroke_amp_lis'].append(target_left_stroke_amp)
+
+        elif target_right_stroke_vel is not None \
+                and target_left_stroke_vel is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
                                     controlMode=p.VELOCITY_CONTROL,
@@ -285,7 +337,8 @@ class BaseMAV:
                                     force=self.params.max_force,
                                     maxVelocity=self.params.max_joint_velocity)
 
-        elif right_input_torque is not None and left_input_torque is not None:
+        elif right_input_torque is not None \
+                and left_input_torque is not None:
             p.setJointMotorControl2(self.body_unique_id,
                                     self.right_stroke_joint,
                                     controlMode=p.TORQUE_CONTROL,
@@ -296,38 +349,22 @@ class BaseMAV:
                                     controlMode=p.TORQUE_CONTROL,
                                     force=left_input_torque,
                                     maxVelocity=self.params.max_joint_velocity)
-        elif target_right_stroke_amp is not None and target_left_stroke_amp is not None:
-            p.setJointMotorControl2(self.body_unique_id,
-                                    self.right_stroke_joint,
-                                    controlMode=p.POSITION_CONTROL,
-                                    targetPosition=target_right_stroke_amp,
-                                    force=self.params.max_force,
-                                    maxVelocity=self.params.max_joint_velocity)
-
-            p.setJointMotorControl2(self.body_unique_id,
-                                    self.left_stroke_joint,
-                                    controlMode=p.POSITION_CONTROL,
-                                    targetPosition=target_left_stroke_amp,
-                                    force=self.params.max_force,
-                                    maxVelocity=self.params.max_joint_velocity)
-        elif target_right_stroke_amp is not None:
-            p.setJointMotorControl2(self.body_unique_id,
-                                    self.right_stroke_joint,
-                                    controlMode=p.POSITION_CONTROL,
-                                    targetPosition=target_right_stroke_amp,
-                                    force=self.params.max_force,
-                                    maxVelocity=self.params.max_joint_velocity)
 
     def get_state_for_motor_torque(self):
         """
         return the  right_stroke_amp    right_stroke_vel    right_stroke_acc    right_torque
                     left_stroke_amp     left_stroke_vel     left_stroke_acc     left_torque
         """
-        #getJointState[3]: appliedJointMotorTorque
+        # getJointState[3]: appliedJointMotorTorque
         right_torque = p.getJointState(self.body_unique_id,
                                        self.right_stroke_joint)[3]
+        self.data['right_torque_without_SpringandDamping'].append(right_torque)
         left_torque = p.getJointState(self.body_unique_id,
                                       self.left_stroke_joint)[3]
+        self.data['left_torque_without_SpringandDamping'].append(left_torque)
+
+        self.joint_state_update()
+
         return (self.right_stroke_amp,
                 self.right_stroke_vel,
                 self.right_stroke_acc,
@@ -344,7 +381,7 @@ class BaseMAV:
                     left_stroke_angular_velocity    left_rotate_angular_velocity
                     left_c_axis         left_r_axis         left_z_axis
         """
-        #getLinkState[7]：worldLinkAngularVelocity，vec3, list of 3 floats
+        # getLinkState[7]：worldLinkAngularVelocity，vec3, list of 3 floats
         right_sum_angular_velocity = np.array(
             p.getLinkState(self.body_unique_id,
                            self.right_wing_link,
@@ -365,7 +402,7 @@ class BaseMAV:
                            computeLinkVelocity=1)[7])
         left_rotate_angular_velocity = left_sum_angular_velocity - left_stroke_angular_velocity
 
-        #getLinkState[5]：URDF worldLinkFrameOrientation，vec4, list of 4 floats
+        # getLinkState[5]：URDF worldLinkFrameOrientation，vec4, list of 4 floats
         right_orientation = np.array(
             p.getMatrixFromQuaternion(
                 p.getLinkState(self.body_unique_id,
@@ -407,12 +444,12 @@ class BaseMAV:
 
         if force.dot(force) == 0:
             return
-        #getLinkState[4]：worldLinkFramePosition，vec3, list of 3 floats
+        # getLinkState[4]：worldLinkFramePosition，vec3, list of 3 floats
         pos = p.getLinkState(self.body_unique_id,
                              link_id)[4]
         pos = np.array(pos)
         position_bias = np.array(position_bias)
-        #Use applyExternalForce and applyExternalTorque to apply force or torque to an entity.
+        # Use applyExternalForce and applyExternalTorque to apply force or torque to an entity.
         # Please note that this method is only effective when using stepSimulation to explicitly step the simulation.
         p.applyExternalForce(self.body_unique_id,
                              link_id,
@@ -453,12 +490,21 @@ class BaseMAV:
 
     def get_constraint_state(self):
         if self.if_fixed is False:
-            #raise AttributeError("the force&torque sensor is not enabled")
-            return [0,0,0,0,0,0]
-        #getConstraintState：Given a unique constraint id, you can query the applied constraint force in the most recent simulation step. 
+            # raise AttributeError("the force&torque sensor is not enabled")
+            return [0, 0, 0, 0, 0, 0]
+        # getConstraintState：Given a unique constraint id, you can query the applied constraint force in the most recent simulation step.
         # The input is a unique constraint id, and the output is a constraint force vector, 
         # whose dimension is the degree of freedom affected by the constraint (for example, a fixed constraint affects 6 degrees of freedom).
-        return p.getConstraintState(self.constraint_id)
+        res = p.getConstraintState(self.constraint_id)
+
+        self.data['x_force'].append(res[0])
+        self.data['y_force'].append(res[1])
+        self.data['z_force'].append(res[2])
+        self.data['x_torque'].append(res[3])
+        self.data['y_torque'].append(res[4])
+        self.data['z_torque'].append(res[5])
+
+        return res
 
     def reset(self):
         """
@@ -481,4 +527,5 @@ class BaseMAV:
         """
         all the cache will be removed
         """
-        self.data.clear()
+        for key in list(self.data.keys()):
+            self.data[key].clear()

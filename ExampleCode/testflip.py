@@ -1,10 +1,11 @@
-import sys 
-sys.path.append('D:/graduate/fwmav/Simul2023/230830/QY-hummingbird')
-from hitsz_qy_hummingbird.wrapper.clamped_wrapped import ClampedMAV
+# import sys 
+# sys.path.append('D:/graduate/fwmav/Simul2023/230830/QY-hummingbird')
+
+from hitsz_qy_hummingbird.wrapper.base_wrapped_mav import BaseWrappedMAV
 from hitsz_qy_hummingbird.configuration import configuration
 from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMotor
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
-from hitsz_qy_hummingbird.wing_beat_controller.synchronous_controller import WingBeatProfile
+from hitsz_qy_hummingbird.wing_beat_controller.synchronous_controller_Ksquare import SynchronousControllerKsquare
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,12 +24,12 @@ wing_params = ParamsForBaseWing(aspect_ratio=9.3,
                                 resolution=500)
 mav_params = configuration.ParamsForMAV_One.change_parameters(sleep_time=0.1)
 
-mav = ClampedMAV(mav_params=configuration.ParamsForMAV_One,
-                 motor_params=motor_params,
-                 wing_params=wing_params)
+mav = BaseWrappedMAV(mav_params=configuration.ParamsForMAV_One,
+                     motor_params=motor_params,
+                     wing_params=wing_params)
 
-controller = WingBeatProfile(nominal_amplitude=np.pi / 3,
-                             frequency=50)
+controller = SynchronousControllerKsquare(nominal_amplitude=np.pi / 3,
+                                          frequency=50)
 
 data = {}
 data['right_stroke_amp'] = []

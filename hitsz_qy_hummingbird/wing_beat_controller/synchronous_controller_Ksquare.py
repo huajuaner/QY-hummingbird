@@ -1,15 +1,10 @@
 from sympy import symbols, sin, cos, asin, diff, pi
-from sympy.plotting import plot
 from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
 from enum import Enum
 
 
-class WingBeatProfile:
+class SynchronousControllerKsquare:
     # WARNING: the returned target velocity is not continuous
-    class Controlmode(Enum):
-        POSITION_CONTROL = "position_control"
-        VELOCITY_CONTROL = "velocity_control"
-        ACC_CONTROL = "acc_control"
 
     def __init__(self,
                  nominal_amplitude=0,
@@ -17,19 +12,19 @@ class WingBeatProfile:
                  differential_amplitude=0,
                  bias_amplitude=0,
                  split_cycle=0.5,
-                 square_parameter=0.0001,
-                 control_mode=Controlmode.POSITION_CONTROL):
+                 square_parameter=0.0001):
 
         self.t, self.An, self.fre, self.Adiff, self.Abias, self.Ksplit, self.Ksquare = symbols(
             't An fre Adiff Abias Ksplit Ksquare')
 
         # Right wing expression
+
         self.right_expr1 = (self.Abias
                             + (self.An + self.Adiff) / asin(self.Ksquare)
                             * asin(self.Ksquare * sin(pi * self.fre * self.t
                                                       / self.Ksplit)))
-        self.right_expr2 = (self.Abias +
-                            (self.An + self.Adiff) / asin(self.Ksquare)
+        self.right_expr2 = (self.Abias
+                            + (self.An + self.Adiff) / asin(self.Ksquare)
                             * asin(self.Ksquare * sin((self.fre * pi * self.t + pi - 2 * pi * self.Ksplit)
                                                       / (1 - self.Ksplit))))
 
@@ -42,20 +37,11 @@ class WingBeatProfile:
                                                      / (1 - self.Ksplit))))
 
         # Differentiate the expressions
-        self.control_mode = control_mode
 
         self.right_expr1_diff1 = diff(self.right_expr1, self.t)
-        self.right_expr1_diff2 = diff(self.right_expr1, self.t, 2)
         self.right_expr2_diff1 = diff(self.right_expr2, self.t)
-        self.right_expr2_diff2 = diff(self.right_expr2, self.t, 2)
         self.left_expr1_diff1 = diff(self.left_expr1, self.t)
-        self.left_expr1_diff2 = diff(self.left_expr1, self.t, 2)
         self.left_expr2_diff1 = diff(self.left_expr2, self.t)
-        self.left_expr2_diff2 = diff(self.left_expr2, self.t, 2)
-
-        print(self.right_expr1)
-        print(self.right_expr1_diff1)
-        print(self.right_expr1_diff2)
 
         # Initialize default values for parameters
         self.nominal_amplitude = nominal_amplitude
@@ -70,17 +56,12 @@ class WingBeatProfile:
         self.right_expr2_sub = None
         self.right_expr1_sub_diff1 = None
         self.right_expr2_sub_diff1 = None
-        self.right_expr1_sub_diff2 = None
-        self.right_expr2_sub_diff2 = None
-
         self.left_expr1_sub = None
         self.left_expr2_sub = None
         self.left_expr1_sub_diff1 = None
         self.left_expr2_sub_diff1 = None
-        self.left_expr1_sub_diff2 = None
-        self.left_expr2_sub_diff2 = None
 
-        self.change_parameter()
+        self.update()
 
     def change_parameter(self,
                          nominal_amplitude: float = None,
@@ -102,67 +83,43 @@ class WingBeatProfile:
         if square_parameter is not None:
             self.square_parameter = square_parameter
 
+        self.update()
+
+    def update(self):
         mydict = [(self.An, self.nominal_amplitude),
                   (self.fre, self.frequency),
                   (self.Adiff, self.differential_amplitude),
                   (self.Abias, self.bias_amplitude),
                   (self.Ksplit, self.split_cycle),
                   (self.Ksquare, self.square_parameter),
-                  (pi, 3.1415926)]
+                  (pi, 3.14159265)]
 
         self.right_expr1_sub = self.right_expr1.subs(mydict)
         self.right_expr1_sub_diff1 = self.right_expr1_diff1.subs(mydict)
-        self.right_expr1_sub_diff2 = self.right_expr1_diff2.subs(mydict)
         self.right_expr2_sub = self.right_expr2.subs(mydict)
         self.right_expr2_sub_diff1 = self.right_expr2_diff1.subs(mydict)
-        self.right_expr2_sub_diff2 = self.right_expr2_diff2.subs(mydict)
 
         self.left_expr1_sub = self.left_expr1.subs(mydict)
         self.left_expr1_sub_diff1 = self.left_expr1_diff1.subs(mydict)
-        self.left_expr1_sub_diff2 = self.left_expr1_diff2.subs(mydict)
         self.left_expr2_sub = self.left_expr2.subs(mydict)
         self.left_expr2_sub_diff1 = self.left_expr2_diff1.subs(mydict)
-        self.left_expr2_sub_diff2 = self.left_expr2_diff2.subs(mydict)
 
     def step(self):
         """
-        Input the time in s
-        Return the rightTargetPos, rightTargetVel, rightTargetAcc, leftTargetPos, LeftTargetVel, LeftTargetAcc
+        Use the universal time in GLOBAL_CONFIGURATION
+        Return the rightTargetPos, rightTargetVel, leftTargetPos, LeftTargetVel
         """
-        the_time = GLOBAL_CONFIGURATION.TICKTOCK / GLOBAL_CONFIGURATION.TIMESTEP
+        the_time = GLOBAL_CONFIGURATION.TIME
         time = the_time % (1 / self.frequency)
         mydict = [(self.t, time)]
 
-        if self.control_mode == self.Controlmode.POSITION_CONTROL:
-            if (time * self.frequency) % 1 < self.split_cycle:
-                return [self.right_expr1_sub.subs(mydict),
-                        self.left_expr1_sub.subs(mydict)]
-            else:
-                return [self.right_expr2_sub.subs(mydict),
-                        self.left_expr2_sub.subs(mydict)]
-        elif self.control_mode == self.Controlmode.VELOCITY_CONTROL:
-            if (time * self.frequency) % 1 < self.split_cycle:
-                return [self.right_expr1_sub.subs(mydict),
-                        self.right_expr1_sub_diff1.subs(mydict),
-                        self.left_expr1_sub.subs(mydict),
-                        self.left_expr1_sub_diff1.subs(mydict)]
-            else:
-                return [self.right_expr2_sub.subs(mydict),
-                        self.right_expr2_sub_diff1.subs(mydict),
-                        self.left_expr2_sub.subs(mydict),
-                        self.left_expr2_sub_diff1.subs(mydict)]
-        elif self.control_mode == self.Controlmode.ACC_CONTROL:
-            if (time * self.frequency) % 1 < self.split_cycle:
-                return [self.right_expr1_sub.subs(mydict),
-                        self.right_expr1_sub_diff1.subs(mydict),
-                        self.right_expr1_sub_diff2.subs(mydict),
-                        self.left_expr1_sub.subs(mydict),
-                        self.left_expr1_sub_diff1.subs(mydict),
-                        self.left_expr1_sub_diff2.subs(mydict)]
-            else:
-                return [self.right_expr2_sub.subs(mydict),
-                        self.right_expr2_sub_diff1.subs(mydict),
-                        self.right_expr2_sub_diff2.subs(mydict),
-                        self.left_expr2_sub.subs(mydict),
-                        self.left_expr2_sub_diff1.subs(mydict),
-                        self.left_expr2_sub_diff2.subs(mydict)]
+        if (time * self.frequency) % 1 < self.split_cycle:
+            return [self.right_expr1_sub.subs(mydict),
+                    self.right_expr1_sub_diff1.subs(mydict),
+                    self.left_expr1_sub.subs(mydict),
+                    self.left_expr1_sub_diff1.subs(mydict)]
+        else:
+            return [self.right_expr2_sub.subs(mydict),
+                    self.right_expr2_sub_diff1.subs(mydict),
+                    self.left_expr2_sub.subs(mydict),
+                    self.left_expr2_sub_diff1.subs(mydict)]

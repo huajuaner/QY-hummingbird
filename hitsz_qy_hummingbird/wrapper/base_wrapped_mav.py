@@ -8,19 +8,20 @@ from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATIO
 from hitsz_qy_hummingbird.utils.create_urdf import URDFCreator
 
 
-class ClampedMAV():
+class BaseWrappedMAV():
     """
     This class is specially defined for the test of wing beat controller
-    in which the controller is outside of the class
-
+    in which the controller is outside the class
     """
 
     def __init__(self,
                  mav_params: ParamsForBaseMAV,
                  motor_params: ParamsForBaseMotor,
                  wing_params: ParamsForBaseWing,
-                 if_gui,
-                 if_fixed):
+                 if_gui: bool,
+                 if_fixed: bool,
+                 if_noise: bool = False,
+                 if_constrained: bool = False):
         urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
                                    r=wing_params.length,
                                    chord_root=wing_params.chord_root,
@@ -30,7 +31,9 @@ class ClampedMAV():
         self.mav = BaseMAV(urdf_name=urdf_name,
                            mav_params=mav_params,
                            if_gui=if_gui,
-                           if_fixed=if_fixed)
+                           if_fixed=if_fixed,
+                           if_noise=if_noise,
+                           if_constrained=if_constrained)
 
         self.right_motor = BaseBLDC(motor_params)
         self.left_motor = BaseBLDC(motor_params)
@@ -39,7 +42,6 @@ class ClampedMAV():
 
         self.logger = GLOBAL_CONFIGURATION.logger
         self.data = {}
-        self.observation = None
 
     def step(self,
              action):
@@ -68,19 +70,12 @@ class ClampedMAV():
             truncated: bool
         """
 
-        (right_stroke_amp,
-         right_stroke_vel,
-         right_input_torque,
-         left_stroke_amp,
-         left_stroke_vel,
-         left_input_torque) = action
-
-        self.mav.joint_control(target_right_stroke_amp=right_stroke_amp,
-                               target_right_stroke_vel=right_stroke_vel,
-                               right_input_torque=right_input_torque,
-                               target_left_stroke_amp=left_stroke_amp,
-                               target_left_stroke_vel=left_stroke_vel,
-                               left_input_torque=left_input_torque)
+        (target_right_stroke_amp,
+         target_right_stroke_vel,
+         target_right_input_torque,
+         target_left_stroke_amp,
+         target_left_stroke_vel,
+         target_left_input_torque) = action
 
         (right_stroke_angular_velocity, right_rotate_angular_velocity,
          right_c_axis, right_r_axis, right_z_axis,
@@ -120,9 +115,16 @@ class ClampedMAV():
         )
 
         self.mav.set_link_torque_world_frame(
-            linkid= self.mav.params.left_wing_link,
+            linkid=self.mav.params.left_wing_link,
             torque=left_aerotorque
         )
+
+        self.mav.joint_control(target_right_stroke_amp=target_right_stroke_amp,
+                               target_right_stroke_vel=target_right_stroke_vel,
+                               right_input_torque=target_right_input_torque,
+                               target_left_stroke_amp=target_left_stroke_amp,
+                               target_left_stroke_vel=target_left_stroke_vel,
+                               left_input_torque=target_left_input_torque)
 
         self.mav.step()
 
@@ -133,6 +135,7 @@ class ClampedMAV():
                                  stroke_angular_amp=right_stroke_amp,
                                  stroke_angular_vel=right_stroke_vel,
                                  stroke_angular_acc=right_stroke_acc)
+
         right_motor_current = self.right_motor.i
         right_motor_voltage = self.right_motor.v
 
@@ -140,12 +143,13 @@ class ClampedMAV():
                                 stroke_angular_amp=left_stroke_amp,
                                 stroke_angular_vel=left_stroke_vel,
                                 stroke_angular_acc=left_stroke_acc)
+
         left_motor_current = self.left_motor.i
         left_motor_voltage = self.left_motor.v
 
         force_info = self.mav.get_constraint_state()
 
-        return  [right_stroke_amp, right_stroke_vel,
+        return [right_stroke_amp, right_stroke_vel,
                 right_stroke_acc, right_torque,
                 right_motor_current, right_motor_voltage,
                 left_stroke_amp, left_stroke_vel,

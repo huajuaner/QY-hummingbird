@@ -1,4 +1,4 @@
-from hitsz_qy_hummingbird.configuration.global_configuration import GlobalStorageWrapper
+from hitsz_qy_hummingbird.configuration.global_configuration import GlobalConfigWrapper
 from hitsz_qy_hummingbird.base_FWMAV.MAV.MAV_params import ParamsForBaseMAV
 from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMotor
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
@@ -9,8 +9,8 @@ from numpy import pi
 This file stores most of the configuration used while the simulation
 """
 
-GLOBAL_CONFIGURATION = GlobalStorageWrapper()
-GLOBAL_CONFIGURATION.logger_init()
+GLOBAL_CONFIGURATION = GlobalConfigWrapper()
+
 """
 GLOBAL_CONFIGURATION stores the filepath and the logger.
 """
@@ -33,7 +33,7 @@ ParamsForMAV_One = ParamsForBaseMAV(rotate_axis=0,
                                     max_angle_of_rotate=pi / 4,
                                     max_angle_of_stroke=pi / 2,
                                     max_force=1000,
-                                    max_joint_velocity=100000,
+                                    max_joint_velocity=1000,
                                     initial_xyz=np.array([0, 0, 10]),
                                     initial_rpy=np.array([0, 0, pi/2]),
                                     right_stroke_joint=0,
@@ -44,5 +44,5 @@ ParamsForMAV_One = ParamsForBaseMAV(rotate_axis=0,
                                     right_wing_link=1,
                                     left_rod_link=2,
                                     left_wing_link=3,
-                                    position_gain = 0.4,
-                                    velocity_gain = 0.1)
+                                    position_gain = 0,
+                                    velocity_gain = 0)

@@ -14,7 +14,7 @@ class ParamsForBaseMotor:
         self.gear_efficiency = None
         self.gear_ratio = None
 
-        self.spring_youngs_modulus = None
+        self.spring_youngs_modulus = 193
         self.spring_wire_diameter = None
         self.spring_number_of_coils = None
         self.spring_outer_diameter = None
@@ -40,7 +40,6 @@ class ParamsForBaseMotor:
                 for attr in
                 ["spring_youngs_modulus", "spring_wire_diameter", "spring_number_of_coils", "spring_outer_diameter"]
         ):
-            # TODO: Calculate the spring constant based on the provided parameters
             self.spring_constant = 2 * self.spring_wire_diameter ** 4 \
                                    / (67 * self.spring_number_of_coils * self.spring_outer_diameter) * 100
             """

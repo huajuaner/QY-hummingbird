@@ -27,13 +27,14 @@ class MyLogger(logging.Logger):
 
         return None
 
-class GlobalStorageWrapper:
+
+class GlobalConfigWrapper:
     def __init__(self):
         self.hash_code = 0
-        self.logger = 0
+        self.logger = None
 
         # change the relative path to absolute path
-        module = inspect.getmodule(GlobalStorageWrapper)
+        module = inspect.getmodule(GlobalConfigWrapper)
         module_file = module.__file__
 
         # make sure that the path is absolute
@@ -44,8 +45,21 @@ class GlobalStorageWrapper:
         self.temporary_urdf_path = absolute_dir_path + "/../../TemporaryURDF/"
         self.urdf_folder_path = absolute_dir_path + "/../../URDFdir/"
         self.logger_path = 0
+
         self.TIMESTEP = 5000
         self.TICKTOCK = 0
+        self.TIME = 0
+
+    def loginit_ex(self,
+                   additional_file_folder,
+                   readme):
+        self.temporary_data_path = self.temporary_data_path + additional_file_folder + '/'
+        self.logger_init()
+        self.logger.debug(readme)
+
+    def step(self):
+        self.TICKTOCK = self.TICKTOCK + 1
+        self.TIME = self.TICKTOCK / self.TIMESTEP
 
     def logger_init(self):
         """
@@ -84,4 +98,3 @@ class GlobalStorageWrapper:
         # 将 Handler 添加到 Logger 对象中
         self.logger.addHandler(console_handler)
         self.logger.addHandler(file_handler)
-
