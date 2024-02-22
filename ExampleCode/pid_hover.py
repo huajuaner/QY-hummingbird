@@ -1,25 +1,15 @@
 import sys 
-sys.path.append('D://graduate//fwmav//simul2024//240201//QY-hummingbird-main')
-from hitsz_qy_hummingbird.wrapper.clamped_wrapped import ClampedMAV
+sys.path.append('D:/graduate/fwmav/Simul2023/230818/QY-hummingbird-main')
+
+from hitsz_qy_hummingbird.wrapper.trac_wrapped import TracMAV
 from hitsz_qy_hummingbird.configuration import configuration
 from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMotor
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
 from hitsz_qy_hummingbird.wing_beat_controller.synchronous_controller import WingBeatProfile
+from hitsz_qy_hummingbird.pid_controller.pidlinear import PIDLinear
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-'''
-synchronous_controller: WingBeatProfile 
-由扑动幅值、扑动频率、幅值差、幅值偏置、劈裂翼拍、方波参数等几何参数 
-通过sin函数直接生成 
-t时刻两翼扑动幅值、速度、加速度
-
-clamped_wrapped: ClampedMAV
-控制翼运动   self.mav.joint_control(amp) ——> p.setJointMotorControl2
-施加空气动力 self.right_wing.calculate_aeroforce_and_torque,  
-            self.mav.set_link_force_world_frame ——> p.applyExternalForce
-'''
 
 motor_params = configuration.ParamsForMaxonSpeed6M
 motor_params.change_parameters(spring_wire_diameter=0.5,
@@ -36,14 +26,22 @@ wing_params = ParamsForBaseWing(aspect_ratio=9.3,
 
 mav_params = configuration.ParamsForMAV_One.change_parameters(sleep_time=0.01)
 
-mav = ClampedMAV(mav_params=configuration.ParamsForMAV_One,
+mav = TracMAV(mav_params=configuration.ParamsForMAV_One,
                  motor_params=motor_params,
                  wing_params=wing_params)
 
-print("a_body_unique_id is        \n" + str(mav.mav.body_unique_id))
 
-controller = WingBeatProfile(nominal_amplitude=np.pi / 3,
+model = PIDLinear()
+winggeo_controller = WingBeatProfile(nominal_amplitude=np.pi * 0.4,
                              frequency=34)
+
+
+model.pos_target_x = 0
+model.pos_target_y = 0
+model.pos_target_z = 1
+model.ang_ef_target_yaw = np.pi/2
+
+#print("aaaaaaaaaaaaaaaaa_body_unique_id is        \n" + str(mav.mav.body_unique_id))
 
 data = {}
 data['right_stroke_amp'] = []
@@ -51,30 +49,55 @@ data['left_stroke_amp'] = []
 data['right_stroke_vel'] = []
 data['left_stroke_vel'] = []
 data['r_u']=[]
-data['r_t']=[]
+#data['r_t']=[]
 data['l_u']=[]
-data['l_t']=[]
+#data['l_t']=[]
 
+obs, wingobs = mav.reset()
+
+print("base初始状态obs:\n")
+print(obs)
+print("wing初始状态wingbos:\n")
+print(wingobs)
+
+flag_pid = 1
 cnt = 0
 while cnt < 1000:
+
+    # if(cnt<100):
+    #     (right_stroke_amp, right_stroke_vel, _, left_stroke_amp, left_stroke_vel, _) = winggeo_controller.step()
+    #     action = [right_stroke_amp, None, None, left_stroke_amp, None, None]
+    #     obs = mav.geoa(action=action)
+        
+    # if(cnt == 100):
+    #     print("极位置状态obs:\n")
+    #     print(obs)
+
+    # if(cnt>99):
+    if flag_pid == 0:
+        r_voltage, l_voltage = model.straight_cos() 
+    else:
+        r_voltage, l_voltage = model.predict(obs)
+    action = [r_voltage, l_voltage]
+    obs, wingobs = mav.step(action=action)
+
+    data['right_stroke_amp'] .append(wingobs[0])
+    data['left_stroke_amp'] .append(wingobs[1])
+    data['right_stroke_vel'] .append(wingobs[2])
+    data['left_stroke_vel'] .append(wingobs[3])
+    data['r_u'].append(r_voltage)
+    #data['r_t'].append(r_t)
+    data['l_u'].append(l_voltage)
+    #data['l_t'].append(l_t)
+
     cnt = cnt + 1
-    (right_stroke_amp, right_stroke_vel, _, left_stroke_amp, left_stroke_vel, _) = controller.step()
 
-    if(cnt<100):
-        action = [right_stroke_amp, None, None, left_stroke_amp, None, None]
-        mav.geo(action=action)
-    if(cnt>99):
-        action = [right_stroke_amp, None, None,left_stroke_amp, None, None]
-        _,_,_,r_t,_,r_u,_,_,_,l_t,_,l_u,_,_,_,_,_,_ = mav.step(action=action)
-        data['right_stroke_amp'].append(right_stroke_amp)
-        data['left_stroke_amp'].append(left_stroke_amp)
-        data['right_stroke_vel'].append( right_stroke_vel)
-        data['left_stroke_vel'].append( left_stroke_vel)
-        data['r_u'].append(r_u)
-        data['r_t'].append(r_t)
-        data['l_u'].append(l_u)
-        data['l_t'].append(l_t)
 
+print("base终止状态obs:\n")
+print(obs)
+print("wing终止状态wingbos:\n")
+print(wingobs)
+       
 mav.close()
 data = pd.DataFrame(
     data
@@ -88,7 +111,6 @@ data.to_csv("tem.csv",index = False)
 # plt.title('Stroke Amplitude')
 # plt.legend()
 # plt.show()
-
 
 fig, ax1 = plt.subplots(facecolor='lightblue')
 
@@ -109,6 +131,5 @@ ax2.plot(data.index, data['r_u'], color=color3)
 ax2.plot(data.index, data['l_u'], color=color4)
 ax2.tick_params(axis='y', labelcolor=color3)
 
-fig.tight_layout()  # otherwise the right y-label is slightly clipps
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.show()
-

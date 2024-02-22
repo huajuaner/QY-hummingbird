@@ -67,7 +67,7 @@
       </geometry>
     </collision>
   </link>
-  <joint name="left_Stroke_joint" type="continuous">
+  <joint name="left_stroke_joint" type="continuous">
     <origin xyz="0.016247 0 0.0095033" rpy="0 0 0" />
     <parent link="torso" />
     <child link="left_wing_rod" />

@@ -18,20 +18,18 @@ class ClampedMAV():
     def __init__(self,
                  mav_params: ParamsForBaseMAV,
                  motor_params: ParamsForBaseMotor,
-                 wing_params: ParamsForBaseWing,
-                 if_gui,
-                 if_fixed):
-        urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
-                                   r=wing_params.length,
-                                   chord_root=wing_params.chord_root,
-                                   chord_tip=wing_params.chord_tip)
-        urdf_name = urdf_creator.write_the_urdf()
+                 wing_params: ParamsForBaseWing):
+        # urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
+        #                             r=wing_params.length,
+        #                             chord_root=wing_params.chord_root,
+        #                             chord_tip=wing_params.chord_tip)
+        # urdf_name = urdf_creator.write_the_urdf()
 
-        self.mav = BaseMAV(urdf_name=urdf_name,
+        self.mav = BaseMAV(
                            mav_params=mav_params,
-                           if_gui=if_gui,
-                           if_fixed=if_fixed)
-
+                           if_gui=True,
+                           if_fixed=False
+                           )
         self.right_motor = BaseBLDC(motor_params)
         self.left_motor = BaseBLDC(motor_params)
         self.right_wing = BaseWing(wing_params)
@@ -40,6 +38,23 @@ class ClampedMAV():
         self.logger = GLOBAL_CONFIGURATION.logger
         self.data = {}
         self.observation = None
+
+    def geo(self,
+             action):
+        (right_stroke_amp,
+         right_stroke_vel,
+         right_input_torque,
+         left_stroke_amp,
+         left_stroke_vel,
+         left_input_torque) = action
+
+        self.mav.joint_control(target_right_stroke_amp=right_stroke_amp,
+                               target_right_stroke_vel=right_stroke_vel,
+                               right_input_torque=right_input_torque,
+                               target_left_stroke_amp=left_stroke_amp,
+                               target_left_stroke_vel=left_stroke_vel,
+                               left_input_torque=left_input_torque)
+        self.mav.step()
 
     def step(self,
              action):
@@ -82,6 +97,7 @@ class ClampedMAV():
                                target_left_stroke_vel=left_stroke_vel,
                                left_input_torque=left_input_torque)
 
+        #计算空气动力学
         (right_stroke_angular_velocity, right_rotate_angular_velocity,
          right_c_axis, right_r_axis, right_z_axis,
          left_stroke_angular_velocity, left_rotate_angular_velocity,
@@ -103,11 +119,13 @@ class ClampedMAV():
             z_axis=left_z_axis
         )
 
+        
         self.mav.set_link_force_world_frame(
             link_id=self.mav.params.right_wing_link,
             position_bias=right_pos_bias,
             force=right_aeroforce
         )
+        
         self.mav.set_link_torque_world_frame(
             linkid=self.mav.params.right_wing_link,
             torque=right_aerotorque
@@ -123,6 +141,7 @@ class ClampedMAV():
             linkid= self.mav.params.left_wing_link,
             torque=left_aerotorque
         )
+        
 
         self.mav.step()
 
