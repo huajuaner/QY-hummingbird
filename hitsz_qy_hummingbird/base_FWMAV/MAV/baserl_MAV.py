@@ -4,24 +4,25 @@ from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATIO
 import numpy as np
 import pybullet as p
 import pybullet_data
-from pprint import pprint
 
-class BaseMAV:
+
+class BaseRlMAV:
     """
     This class should have as few functions as possible,
     concentrating all PyBullet environment functionalities internally.
     """
 
     def __init__(self,
+                 urdf_name: str,
                  mav_params: ParamsForBaseMAV,
-                 if_gui: bool,
+                 client,
                  if_fixed: bool):
         """
-        the urdf should be loaded and the variables should be set up
+        the variables should be set up
         the joints and rods are defined accordingly,
         and the configuration should be set up.
         """
-
+        self.physics_client = client
         self.params = mav_params
         self.params.initial_orientation = p.getQuaternionFromEuler(self.params.initial_rpy)
         self.data = {}
@@ -56,10 +57,6 @@ class BaseMAV:
         self.left_rotate_amp = 0
         self.left_rotate_vel = 0
 
-        if if_gui:
-            self.physics_client = p.connect(p.GUI)
-        else:
-            self.physics_client = p.connect(p.DIRECT)
         #COV_ENABLE_RGB_BUFFER_PREVIEW：启用或禁用RGB缓冲区预览。
         #COV_ENABLE_DEPTH_BUFFER_PREVIEW：启用或禁用深度缓冲区预览。
         #COV_ENABLE_SEGMENTATION_MARK_PREVIEW：启用或禁用分割标记预览。0，禁用
@@ -69,101 +66,28 @@ class BaseMAV:
 
         # 添加资源路径，p.setAdditionalSearchPath(pybullet_data.getDataPath())用于设置模型加载路径。这个函数接受一个参数，表示要添加的搜索路径。pybullet_data.getDataPath()返回PyBullet内置数据的路径，其中包含一些预定义的模型和环境，例如平面、机器人等。
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        print(pybullet_data.getDataPath())
+
         p.setGravity(self.params.gravity[0],
                      self.params.gravity[1],
                      self.params.gravity[2])
 
         p.loadURDF("plane.urdf")
-        # # # 加载坐标轴
-        # axis_length = 0.1
-        # axis_visual = p.addUserDebugLine([0, 0, 0], [axis_length, 0, 0], [0.1, 0, 0], parentObjectUniqueId=-1, parentLinkIndex=-1)
-        # p.addUserDebugLine([0, 0, 0], [0, axis_length, 0], [0, 0.1, 0], parentObjectUniqueId=-1, parentLinkIndex=-1)
-        # p.addUserDebugLine([0, 0, 0], [0, 0, axis_length], [0, 0, 1], parentObjectUniqueId=-1, parentLinkIndex=-1)
-
-        # # 添加XYZ标签
-        # p.addUserDebugText('X', [axis_length, 0, 0], textColorRGB=[1, 0, 0], textSize=2, parentObjectUniqueId=axis_visual)
-        # p.addUserDebugText('Y', [0, axis_length, 0], textColorRGB=[0, 1, 0], textSize=2, parentObjectUniqueId=axis_visual)
-        # p.addUserDebugText('Z', [0, 0, axis_length], textColorRGB=[0, 0, 1], textSize=2, parentObjectUniqueId=axis_visual)
-
-        # startPos = [-3, 2, 0.2]
-        # startOrientation = p.getQuaternionFromEuler([0, 0, 0])
-        # boxId = p.loadURDF("D://graduate//fwmav//fsolidwork//240118//build7//urdf//build7.urdf", startPos, startOrientation)
-        p.loadURDF("samurai.urdf",
-            physicsClientId=self.physics_client
-            )
-        
-        # p.loadURDF("build.urdf",
-        #             physicsClientId=self.physics_client
-        #            )
-        
-        # p.loadURDF("duck_vhacd.urdf",
-        #                [-1, 0, 1],
-        #                p.getQuaternionFromEuler([0.5*np.pi, 0, 0.5*np.pi]),
-        #                physicsClientId=self.physics_client
-        #                )    
-        # p.loadURDF("teddy_vhacd.urdf",
-        #                [0, -1, .1],
-        #                p.getQuaternionFromEuler([0, 0, 0]),
-        #                physicsClientId=self.physics_client
-        #                )
-       
+        p.loadURDF("duck_vhacd.urdf",
+                       [-1, 0, 1],
+                       
+                       physicsClientId=self.physics_client
+                       )    
+        p.loadURDF("teddy_vhacd.urdf",
+                       [0, -1, .1],
+                       p.getQuaternionFromEuler([0, 0, 0]),
+                       physicsClientId=self.physics_client
+                       )
         #URDF_USE_INERTIA_FROM_FILE：默认情况下，Bullet 根据碰撞形状的质量和体积重新计算惯性张量。 如果您可以提供更准确的惯性张量，请使用此标志。
-        self.body_unique_id = p.loadURDF(fileName="D://graduate//fwmav//simul2024//240201//QY-hummingbird-main//URDFdir//newbird24.urdf",
+        self.body_unique_id = p.loadURDF(fileName=urdf_name,
                                          basePosition=self.params.initial_xyz,
                                          baseOrientation=self.params.initial_orientation,
-                                         flags=p.URDF_USE_INERTIA_FROM_FILE)
-        
-        colors = [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1], [1, 1, 1, 1]]   #红 绿  蓝 白
-        p.changeVisualShape(self.body_unique_id, -1, rgbaColor=colors[3]) #torso 白
-        p.changeVisualShape(self.body_unique_id, self.right_wing_link, rgbaColor=colors[0]) #right wing 红
-        p.changeVisualShape(self.body_unique_id, self.left_wing_link, rgbaColor=colors[2]) #left wing 蓝
-        
-        print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
-        print("flapper的信息：")
-        # 可以使用的关节
-        available_joints_indexes = [i for i in range(p.getNumJoints(self.body_unique_id)) if p.getJointInfo(self.body_unique_id, i)[2] != p.JOINT_FIXED]
-        print('可以使用的关节')
-        pprint([p.getJointInfo(self.body_unique_id, i)[1] for i in available_joints_indexes])
-        joint_num = p.getNumJoints(self.body_unique_id)
-        print("flapper的关节数量为：", joint_num)
-
-        #在下限》上限的情况下忽略值。                    slider和revolute(hinge)类型的位移最小值：0.0
-        #                                               #slider和revolute(hinge)类型的位移最大值：-1.0
-        for joint_index in range(joint_num):
-            info_tuple = p.getJointInfo(self.body_unique_id, joint_index)
-            print(f"关节序号：{info_tuple[0]}\n\
-                    关节名称：{info_tuple[1]}\n\
-                    关节类型：{info_tuple[2]}\n\
-                    机器人第一个位置的变量索引：{info_tuple[3]}\n\
-                    机器人第一个速度的变量索引：{info_tuple[4]}\n\
-                    保留参数：{info_tuple[5]}\n\
-                    关节的阻尼大小：{info_tuple[6]}\n\
-                    关节的摩擦系数：{info_tuple[7]}\n\
-                    slider和revolute(hinge)类型的位移最小值：{info_tuple[8]}\n\
-                    slider和revolute(hinge)类型的位移最大值：{info_tuple[9]}\n\
-                    关节驱动的最大值：{info_tuple[10]}\n\
-                    关节的最大速度：{info_tuple[11]}\n\
-                    节点名称：{info_tuple[12]}\n\
-                    局部框架中的关节轴系：{info_tuple[13]}\n\
-                    父节点frame的关节位置：{info_tuple[14]}\n\
-                    父节点frame的关节方向：{info_tuple[15]}\n\
-                    父节点的索引，若是基座返回-1：{info_tuple[16]}\n\n")
-            
-        for link_id in range(0,4):
-            link_tuple = p.getLinkState(self.body_unique_id, link_id)
-            print(link_id)
-            print(f"质心世界位置：{link_tuple[0]}\n\
-                    质心的世界方向: {link_tuple[1]}\n\
-                    以 URDF 链接框架表示的惯性框架（质心）的局部位置偏移：{link_tuple[2]}\n\
-                    以 URDF 链接框架表示的惯性框架的局部方向：{link_tuple[3]}\n\
-                    URDF 链接框架的世界位置：{link_tuple[4]}\n\
-                    URDF 链接框架的世界方向：{link_tuple[5]}\n\
-                  ")
-        # 仅当 computeLinkVelocity 非零时才返回:
-        # worldLinkLinearVelocity: {link_tuple[6]}\n\
-        # worldLinkAngularVelocity: {link_tuple[7]}\n\
-            
+                                         flags=p.URDF_USE_INERTIA_FROM_FILE,
+                                         physicsClientId=self.physics_client)
         #计算局部惯性对角线是否为零，local inertia diagonal（局部惯性对角线）
         #getDynamicsInfovec3[2]：list of 3 floats
         #局部惯性对角线。 请注意，连杆和底座以质心为中心，并与惯性主轴对齐。惯性张量描述了物体绕其质心旋转时的惯性特性。它是一个对称矩阵，可以对角化，即可以找到一个坐标系，使得惯性张量在该坐标系下的表示为对角矩阵。这个对角矩阵的对角线元素就是局部惯性对角线。
@@ -275,7 +199,7 @@ class BaseMAV:
         the camera should be always targeted at the MAV
         """
         position, orientation = p.getBasePositionAndOrientation(self.body_unique_id)
-        p.resetDebugVisualizerCamera(cameraDistance=0.5,
+        p.resetDebugVisualizerCamera(cameraDistance=1.5,
                                      cameraYaw=120,
                                      cameraPitch=-20,
                                      cameraTargetPosition=position)
@@ -456,20 +380,19 @@ class BaseMAV:
                 p.getLinkState(self.body_unique_id,
                                self.left_wing_link)[5])).reshape(3, 3)
 
-        #rcz axis
         right_r_axis = right_orientation[:, self.params.rotate_axis]
         right_c_axis = -1 * right_orientation[:, self.params.stroke_axis]
         if right_stroke_angular_velocity.dot(right_c_axis) > 0:
-            right_z_axis = -1 * right_orientation[:, self.params.the_left_axis]
-        else:
             right_z_axis = right_orientation[:, self.params.the_left_axis]
+        else:
+            right_z_axis = -1 * right_orientation[:, self.params.the_left_axis]
 
         left_r_axis = -1 * left_orientation[:, self.params.rotate_axis]
         left_c_axis = -1 * left_orientation[:, self.params.stroke_axis]
         if left_stroke_angular_velocity.dot(left_c_axis) < 0:
-            left_z_axis = -1 * left_orientation[:, self.params.the_left_axis]
-        else:
             left_z_axis = left_orientation[:, self.params.the_left_axis]
+        else:
+            left_z_axis = -1 * left_orientation[:, self.params.the_left_axis]
 
         return [right_stroke_angular_velocity,
                 right_rotate_angular_velocity,

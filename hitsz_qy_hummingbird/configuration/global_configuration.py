@@ -44,12 +44,13 @@ class GlobalStorageWrapper:
         self.temporary_urdf_path = absolute_dir_path + "/../../TemporaryURDF/"
         self.urdf_folder_path = absolute_dir_path + "/../../URDFdir/"
         self.logger_path = 0
-        self.TIMESTEP = 5000
+        self.TIMESTEP = 9600
         self.TICKTOCK = 0
 
     def logger_init(self):
         """
         init the universal logger
+        整体而言，这段代码的目的是设置一个日志系统，使得程序可以将调试信息输出到控制台和文件中，便于跟踪和调试程序运行过程。路径和文件名的构建方式确保了每次运行都会生成一个新的日志目录，防止不同运行的日志信息混淆。
         """
 
         current_time = int(time.time())

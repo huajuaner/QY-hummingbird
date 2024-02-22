@@ -87,8 +87,8 @@ class URDFCreator:
         the body inertia and the body mass
         """
         self.urdf_name = f"{GLOBAL_CONFIGURATION.temporary_urdf_path}R_{self.r}_CR_{self.chord_root}_CT_{self.chord_tip}.urdf"
-        if os.path.exists(self.urdf_name):
-            return self.urdf_name
+        # if os.path.exists(self.urdf_name):
+        #     return self.urdf_name
 
         r = self.r * 1000
         ct = self.chord_tip * 1000
@@ -118,7 +118,8 @@ class URDFCreator:
         n_rxz = str(-predicted_rod_y[0][4] * 1e-9)
         # print(rm)
 
-        tree = ET.parse(GLOBAL_CONFIGURATION.urdf_folder_path + 'BrandNewFlapper.urdf')
+        tree = ET.parse(GLOBAL_CONFIGURATION.urdf_folder_path + 'bird2.urdf')
+        print("\n tree have write \n")
 
         root = tree.getroot()
         lr_mass = root.find('./link[@name="left_wing_rod"]/inertial/mass')
