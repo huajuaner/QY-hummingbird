@@ -20,9 +20,9 @@ class BaseWing:
                  params: ParamsForBaseWing):
         self.params = params
         self.logger = GLOBAL_CONFIGURATION.logger
-        self.logger.debug(f"the length is {self.params.length}")
-        self.logger.debug(f"the chord of root is {self.params.chord_root}")
-        self.logger.debug(f"the chord of tip is {self.params.chord_tip}")
+        # self.logger.debug(f"the length is {self.params.length}")
+        # self.logger.debug(f"the chord of root is {self.params.chord_root}")
+        # self.logger.debug(f"the chord of tip is {self.params.chord_tip}")
         self.data={}
 
     def calculate_aeroforce_and_torque(self,

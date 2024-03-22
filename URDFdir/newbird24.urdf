@@ -1,0 +1,275 @@
+<robot
+  name="newbird24">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="1.7347E-18 -9.91E-19 1.7347E-18"
+        rpy="0 0 0" />
+      <mass
+        value="0.0041228" />
+      <inertia
+        ixx="1.0216E-06"
+        ixy="0"
+        ixz="-5.9E-10"
+        iyy="6.6458E-07"
+        iyz="2.9E-10"
+        izz="4.262E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="rr">
+    <inertial>
+      <origin
+        xyz="-2.3263E-07 0.031358 -0.0090833"
+        rpy="0 0 0" />
+      <mass
+        value="9.5877E-05" />
+      <inertia
+        ixx="3.5252E-07"
+        ixy="0"
+        ixz="0"
+        iyy="4.795E-08"
+        iyz="-2.537E-08"
+        izz="3.2059E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/rr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/rr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="rjs"
+    type="continuous">
+    <origin
+      xyz="0 0.01625 0.0097428"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="rr" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="rw">
+    <inertial>
+      <origin
+        xyz="7.5E-06 0.043056 -0.011667"
+        rpy="0 0 0" />
+      <mass
+        value="1.2E-05" />
+      <inertia
+        ixx="3.681E-08"
+        ixy="0"
+        ixz="0"
+        iyy="1.19E-09"
+        iyz="-5.05E-09"
+        izz="3.562E-08" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/rw.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/rw.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="rjr"
+    type="continuous">
+    <origin
+      xyz="0 0 -0.0061999"
+      rpy="0 0 0" />
+    <parent
+      link="rr" />
+    <child
+      link="rw" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="lr">
+    <inertial>
+      <origin
+        xyz="2.3263E-07 -0.031358 -0.0090833"
+        rpy="0 0 0" />
+      <mass
+        value="9.5877E-05" />
+      <inertia
+        ixx="3.5238E-07"
+        ixy="0"
+        ixz="0"
+        iyy="4.726E-08"
+        iyz="2.518E-08"
+        izz="3.2114E-07" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/lr.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/lr.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="ljs"
+    type="continuous">
+    <origin
+      xyz="0 -0.01625 0.00974"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="lr" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="0"
+      velocity="0" />
+  </joint>
+  <link
+    name="lw">
+    <inertial>
+      <origin
+        xyz="-7.5E-06 -0.043056 -0.011667"
+        rpy="0 0 0" />
+      <mass
+        value="1.2E-05" />
+      <inertia
+        ixx="3.681E-08"
+        ixy="0"
+        ixz="0"
+        iyy="1.19E-09"
+        iyz="5.05E-09"
+        izz="3.562E-08" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/lw.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="./24meshes/lw.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="ljr"
+    type="continuous">
+    <origin
+      xyz="0 0 -0.0061999"
+      rpy="0 0 0" />
+    <parent
+      link="lr" />
+    <child
+      link="lw" />
+    <axis
+      xyz="0 -1 0" />
+    <limit
+      lower="-1.57"
+      upper="1.57"
+      effort="0"
+      velocity="0" />
+  </joint>
+</robot>
