@@ -113,13 +113,20 @@ class SynchronousControllerKsquare:
         time = the_time % (1 / self.frequency)
         mydict = [(self.t, time)]
 
+        if GLOBAL_CONFIGURATION.TIME < 0.10 :
+            k_a = GLOBAL_CONFIGURATION.TIME / 0.10
+        else :
+            k_a = 1
+
+        # k_a = 1
+
         if (time * self.frequency) % 1 < self.split_cycle:
-            return [self.right_expr1_sub.subs(mydict),
-                    self.right_expr1_sub_diff1.subs(mydict),
-                    self.left_expr1_sub.subs(mydict),
-                    self.left_expr1_sub_diff1.subs(mydict)]
+            return [self.right_expr1_sub.subs(mydict)*k_a,
+                    self.right_expr1_sub_diff1.subs(mydict)*k_a,
+                    self.left_expr1_sub.subs(mydict)*k_a,
+                    self.left_expr1_sub_diff1.subs(mydict)*k_a]
         else:
-            return [self.right_expr2_sub.subs(mydict),
-                    self.right_expr2_sub_diff1.subs(mydict),
-                    self.left_expr2_sub.subs(mydict),
-                    self.left_expr2_sub_diff1.subs(mydict)]
+            return [self.right_expr2_sub.subs(mydict)*k_a,
+                    self.right_expr2_sub_diff1.subs(mydict)*k_a,
+                    self.left_expr2_sub.subs(mydict)*k_a,
+                    self.left_expr2_sub_diff1.subs(mydict)*k_a]
