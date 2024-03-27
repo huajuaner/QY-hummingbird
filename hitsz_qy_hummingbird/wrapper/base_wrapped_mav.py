@@ -22,12 +22,13 @@ class BaseWrappedMAV():
                  if_fixed: bool,
                  if_noise: bool = False,
                  if_constrained: bool = False):
-        urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
-                                   r=wing_params.length,
-                                   chord_root=wing_params.chord_root,
-                                   chord_tip=wing_params.chord_tip)
-        urdf_name = urdf_creator.write_the_urdf()
+        # urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
+        #                            r=wing_params.length,
+        #                            chord_root=wing_params.chord_root,
+        #                            chord_tip=wing_params.chord_tip)
+        # urdf_name = urdf_creator.write_the_urdf()
 
+        urdf_name='D://graduate//fwmav//simul2024//240325git//QY-hummingbird//URDFdir//symme0324.urdf'
         self.mav = BaseMAV(urdf_name=urdf_name,
                            mav_params=mav_params,
                            if_gui=if_gui,
@@ -37,8 +38,8 @@ class BaseWrappedMAV():
 
         self.right_motor = BaseBLDC(motor_params)
         self.left_motor = BaseBLDC(motor_params)
-        self.right_wing = BaseWing(wing_params)
-        self.left_wing = BaseWing(wing_params)
+        self.right_wing = BaseWing(wing_params, if_log=True)
+        self.left_wing = BaseWing(wing_params, if_log=True)
 
         self.logger = GLOBAL_CONFIGURATION.logger
         self.data = {}

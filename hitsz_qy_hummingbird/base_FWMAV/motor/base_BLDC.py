@@ -42,7 +42,8 @@ class BaseBLDC():
              voltage,
              stroke_angular_amp,
              stroke_angular_vel,
-             stroke_angular_acc):
+             stroke_angular_acc,
+             if_record,):
         """
         Given the Voltage
         return the output torque which has already considered the spring effect
@@ -60,14 +61,16 @@ class BaseBLDC():
         torque_output = (torque_motor * self.params.gear_ratio * self.params.gear_efficiency
                          - self.params.spring_constant * stroke_angular_amp
                          - self.params.wing_damping_coeff * stroke_angular_vel)
-        self.record()
+        if if_record:
+            self.record()
         return torque_output
 
     def reverse(self,
                 torque,
                 stroke_angular_amp,
                 stroke_angular_vel,
-                stroke_angular_acc):
+                stroke_angular_acc,
+                if_record,):
         """
         given the output torque,
         calculate the motor voltage and current
@@ -98,7 +101,8 @@ class BaseBLDC():
         self.v = self.params.terminal_r * self.i \
                  + rotor_angular_vel * 60 / (2 * pi * self.params.speed_constant)
         self.efficiency3 = self.params.torque_constant * rotor_angular_vel / self.v
-        self.record()
+        if if_record:
+            self.record()
 
     def record(self):
         self.data['current'].append(self.i)
