@@ -46,7 +46,7 @@ class GlobalConfigWrapper:
         self.urdf_folder_path = absolute_dir_path + "/../../URDFdir/"
         self.logger_path = 0
 
-        self.TIMESTEP = 5000
+        self.TIMESTEP = 24000
         self.TICKTOCK = 0
         self.TIME = 0
 
@@ -73,28 +73,30 @@ class GlobalConfigWrapper:
         self.logger = MyLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
 
-        # 创建控制台 Handler，并设置日志级别为 DEBUG
+        #  Create a console handler and set the log level to DEBUG.
         console_handler = logging.StreamHandler()
         console_handler.setLevel(logging.DEBUG)
 
         self.logger_path = os.path.join(self.temporary_data_path, self.hash_code) + "/"
-        os.makedirs(self.logger_path)
 
-        # 创建文件 Handler，并设置日志级别为 DEBUG
+        if not os.path.exists(self.logger_path):
+            os.makedirs(self.logger_path)
+
+        # Create a file handler and set the log level to DEBUG.
         file_handler = logging.FileHandler(self.logger_path + 'logger.log')
         file_handler.setLevel(logging.DEBUG)
 
-        # 定义日志输出格式
+        # Define the logging output format.
         formatter = logging.Formatter('%(asctime)s -  %(message)s')
         console_handler.setFormatter(formatter)
         file_handler.setFormatter(formatter)
 
         # remark = input("Input The Running Info For logging：")
         #
-        # # 将备注写入README文件
+        # #
         # with open(self.logger_path + "README.txt", 'a') as f:
         #     f.write(remark + '\n')
 
-        # 将 Handler 添加到 Logger 对象中
+        # Add the handler to the logger object.
         self.logger.addHandler(console_handler)
         self.logger.addHandler(file_handler)

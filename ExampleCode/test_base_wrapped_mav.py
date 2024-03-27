@@ -1,6 +1,8 @@
 '''
 This file is used as the standard test file of the base_wrapped_mav
 '''
+import sys 
+sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
 import time
 from hitsz_qy_hummingbird.wrapper.base_wrapped_mav import BaseWrappedMAV
 from hitsz_qy_hummingbird.configuration import configuration
