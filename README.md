@@ -1,11 +1,11 @@
 ## QY-hummingbird
 
-This is an open-source simulation and design tool for motor-driven FWMAV developed by students from CARC (Computer Application Research Center ) HITSZ(Harbin Institute of Technology, Shenzhen)
+This is an open-source simulation and design tool for motor-driven FWMAV developed by students from [CARC (Computer Application Research Center)](http://carc.hitsz.edu.cn/), HITSZ(Harbin Institute of Technology, Shenzhen)
 
 #### Contributor 
 
-- ZHANG Zhiyuan - 2023 Fall PhD, supervised by [Prof. Wang Xuan](https://faculty.hitsz.edu.cn/wangxuan).
-- HU Haitian - 2022 Fall MSc in Computer Science 
+- ZHANG Zhiyuan - 2023 Fall PhD major in Robotics, supervised by [Prof. Wang Xuan](https://faculty.hitsz.edu.cn/wangxuan).
+- HU Haitian - 2022 Fall MSc major in Computer Science 
 
 ### Functions To Add 
 

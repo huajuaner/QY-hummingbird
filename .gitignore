@@ -1,0 +1,13 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+TemporaryData/*
+TemporaryURDF/*
+*.log
+*.csv
+*.txt
+*.pyc
+
+!URDFdir/*
+!TemporaryURDF/URDFdir/
+!TemporaryURDF/*.STL
