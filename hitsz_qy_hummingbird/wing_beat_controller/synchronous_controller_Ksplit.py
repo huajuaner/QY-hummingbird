@@ -1,3 +1,8 @@
+'''    
+this controller exsits an error:
+self.left_expr2_diff_sub = self.left_expr2_diff.susb(self.mydict)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Mul' object has no attribute 'susb' '''
 from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
 from enum import Enum
 from sympy import symbols, sin, cos, asin, diff, pi
