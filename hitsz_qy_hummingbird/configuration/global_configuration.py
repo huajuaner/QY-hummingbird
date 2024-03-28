@@ -61,7 +61,10 @@ class GlobalConfigWrapper:
         self.TICKTOCK = self.TICKTOCK + 1
         self.TIME = self.TICKTOCK / self.TIMESTEP
 
-    def logger_init(self):
+    def timereset(self):
+        self.TICKTOCK = 0
+
+def logger_init(self):
         """
         init the universal logger
         """

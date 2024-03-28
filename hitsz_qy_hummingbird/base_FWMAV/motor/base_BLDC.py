@@ -4,8 +4,10 @@ from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMoto
 from numpy import pi
 
 
-class BaseBLDC():
+class BaseBLDC:
+
     """
+
     V                       = R*i
                             + angular_vel / speed_constant
 
@@ -16,6 +18,8 @@ class BaseBLDC():
     torque_output            = torque_motor * gear_ratio * gear_efficiency
 
     spring_constant         = E   *    d^4   / (67*n*D) *1E2
+
+
     """
 
     def __init__(self,
@@ -43,7 +47,7 @@ class BaseBLDC():
              stroke_angular_amp,
              stroke_angular_vel,
              stroke_angular_acc,
-             if_record,):
+             if_record=False):
         """
         Given the Voltage
         return the output torque which has already considered the spring effect
@@ -70,7 +74,7 @@ class BaseBLDC():
                 stroke_angular_amp,
                 stroke_angular_vel,
                 stroke_angular_acc,
-                if_record,):
+                if_record=False):
         """
         given the output torque,
         calculate the motor voltage and current
@@ -110,7 +114,7 @@ class BaseBLDC():
         Eff = (self.v * self.i - self.i * self.i * self.params.terminal_r) \
               / (self.v * self.i)
         self.data['efficiency1'].append(Eff)
-        self.data['efficiency2'].append(self.output_power/abs(self.i*self.v))
+        self.data['efficiency2'].append(self.output_power / abs(self.i * self.v))
         self.data['efficiency3'].append(self.efficiency3)
         self.data['torque_motor'].append(self.torque_motor)
         self.data['output_power'].append(self.output_power)

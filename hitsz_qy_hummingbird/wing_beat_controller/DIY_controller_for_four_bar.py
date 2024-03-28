@@ -11,7 +11,7 @@ class DIY_controller_for_Four_Bar:
                  differential_frequency=0,
                  right_split_cycle=0.5,
                  left_split_cycle=0.5,
-                 bias = 0):
+                 bias=0):
 
         self.bias = bias
 

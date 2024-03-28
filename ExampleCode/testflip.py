@@ -1,7 +1,7 @@
 # import sys 
 # sys.path.append('D:/graduate/fwmav/Simul2023/230830/QY-hummingbird')
 
-from hitsz_qy_hummingbird.wrapper.base_wrapped_mav import BaseWrappedMAV
+from hitsz_qy_hummingbird.wrapper.wrapped_mav_for_design import WrappedMAVDesign
 from hitsz_qy_hummingbird.configuration import configuration
 from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMotor
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
@@ -24,9 +24,9 @@ wing_params = ParamsForBaseWing(aspect_ratio=9.3,
                                 resolution=500)
 mav_params = configuration.ParamsForMAV_One.change_parameters(sleep_time=0.1)
 
-mav = BaseWrappedMAV(mav_params=configuration.ParamsForMAV_One,
-                     motor_params=motor_params,
-                     wing_params=wing_params)
+mav = WrappedMAVDesign(mav_params=configuration.ParamsForMAV_One,
+                       motor_params=motor_params,
+                       wing_params=wing_params)
 
 controller = SynchronousControllerKsquare(nominal_amplitude=np.pi / 3,
                                           frequency=50)
@@ -43,8 +43,8 @@ while cnt < 3000:
     (right_stroke_amp, right_stroke_vel, _, left_stroke_amp, left_stroke_vel, _) = controller.step()
     data['right_stroke_amp'].append(right_stroke_amp)
     data['left_stroke_amp'].append(left_stroke_amp)
-    data['right_stroke_vel'] . append( right_stroke_vel)
-    data['left_stroke_vel'] . append( left_stroke_vel)
+    data['right_stroke_vel'].append(right_stroke_vel)
+    data['left_stroke_vel'].append(left_stroke_vel)
     action = [right_stroke_amp, None, None, None, None, None]
     mav.step(action=action)
 

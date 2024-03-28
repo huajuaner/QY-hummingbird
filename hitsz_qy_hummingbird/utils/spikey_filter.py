@@ -1,5 +1,3 @@
-
-
 '''
 This filter assumes that the signal follows a harmonic signal
 and removes all the points outside

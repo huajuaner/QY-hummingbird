@@ -1,82 +1,65 @@
 from hitsz_qy_hummingbird.base_FWMAV.MAV.base_MAV import BaseMAV
-from hitsz_qy_hummingbird.base_FWMAV.MAV.MAV_params import ParamsForBaseMAV
-from hitsz_qy_hummingbird.base_FWMAV.motor.base_BLDC import BaseBLDC
 from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMotor
-from hitsz_qy_hummingbird.base_FWMAV.wings.base_Wings import BaseWing
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
+from hitsz_qy_hummingbird.base_FWMAV.wings.base_Wings import BaseWing
+from hitsz_qy_hummingbird.base_FWMAV.motor.base_BLDC import BaseBLDC
 from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
-from hitsz_qy_hummingbird.utils.create_urdf import URDFCreator
+
+import numpy as np
+import pybullet as p
 
 
-class BaseWrappedMAV():
+class WrappedBaseMAV:
     """
-    This class is specially defined for the test of wing beat controller
-    in which the controller is outside the class
+    The control step and the simulation step is isolated.
     """
 
     def __init__(self,
-                 mav_params: ParamsForBaseMAV,
+                 mav: BaseMAV,
                  motor_params: ParamsForBaseMotor,
-                 wing_params: ParamsForBaseWing,
-                 if_gui: bool,
-                 if_fixed: bool,
-                 if_noise: bool = False,
-                 if_constrained: bool = False):
-        # urdf_creator = URDFCreator(gear_ratio=motor_params.gear_ratio,
-        #                            r=wing_params.length,
-        #                            chord_root=wing_params.chord_root,
-        #                            chord_tip=wing_params.chord_tip)
-        # urdf_name = urdf_creator.write_the_urdf()
+                 wing_params: ParamsForBaseWing):
 
-        urdf_name='D://graduate//fwmav//simul2024//240325git//QY-hummingbird//URDFdir//symme0324.urdf'
-        self.mav = BaseMAV(urdf_name=urdf_name,
-                           mav_params=mav_params,
-                           if_gui=if_gui,
-                           if_fixed=if_fixed,
-                           if_noise=if_noise,
-                           if_constrained=if_constrained)
-
-        self.right_motor = BaseBLDC(motor_params)
+        self.mav = mav
         self.left_motor = BaseBLDC(motor_params)
-        self.right_wing = BaseWing(wing_params, if_log=True)
-        self.left_wing = BaseWing(wing_params, if_log=True)
-
+        self.right_motor = BaseBLDC(motor_params)
+        self.right_wing = BaseWing(wing_params)
+        self.left_wing = BaseWing(wing_params)
         self.logger = GLOBAL_CONFIGURATION.logger
         self.data = {}
 
     def step(self,
              action):
+        pass
+
+    def torque_from_voltage(self,
+                            action):
+        '''
+        :param action: right_voltage, left_voltage
+        :return: right_torque, left_torque
+        '''
+
+        (right_voltage, left_voltage) = action
+
+        (right_stroke_amp, right_stroke_vel, right_stroke_acc, _,
+         left_stroke_amp, left_stroke_vel, left_stroke_acc, _) = self.mav.get_state_for_motor_torque()
+
+        right_torque = self.right_motor.step(voltage=right_voltage,
+                                             stroke_angular_amp=right_stroke_amp,
+                                             stroke_angular_vel=right_stroke_vel,
+                                             stroke_angular_acc=right_stroke_acc,
+                                             if_record=False)
+
+        left_torque = self.left_motor.step(voltage=left_voltage,
+                                           stroke_angular_amp=left_stroke_amp,
+                                           stroke_angular_vel=left_stroke_vel,
+                                           stroke_angular_acc=left_stroke_acc,
+                                           if_record=False)
+        return right_torque, left_torque
+
+    def apply_aeroFT(self):
         """
-
-        :param action: [
-            right_stroke_amp
-            right_stroke_vel
-            right_input_torque
-            left_stroke_amp
-            left_stroke_vel
-            left_input_torque
-            ]
-
-        return observation: [
-            right_stroke_amp    right_stroke_vel    right_stroke_acc
-            right_input_torque  right_motor_current right_motor_voltage
-            left_stroke_amp     left_stroke_vel     left_stroke_acc
-            left_input_torque   left_motor_current  left_motor_voltage
-            BodyForce1          BodyForce2          BodyForce3
-            BodyTorque1         BodyTorque2         BodyTorque3
-            ]
-
-            terminated: bool
-
-            truncated: bool
+        compute Aerodynamics
         """
-
-        (target_right_stroke_amp,
-         target_right_stroke_vel,
-         target_right_input_torque,
-         target_left_stroke_amp,
-         target_left_stroke_vel,
-         target_left_input_torque) = action
 
         (right_stroke_angular_velocity, right_rotate_angular_velocity,
          right_c_axis, right_r_axis, right_z_axis,
@@ -104,6 +87,7 @@ class BaseWrappedMAV():
             position_bias=right_pos_bias,
             force=right_aeroforce
         )
+
         self.mav.set_link_torque_world_frame(
             linkid=self.mav.params.right_wing_link,
             torque=right_aerotorque
@@ -119,43 +103,6 @@ class BaseWrappedMAV():
             linkid=self.mav.params.left_wing_link,
             torque=left_aerotorque
         )
-
-        self.mav.joint_control(target_right_stroke_amp=target_right_stroke_amp,
-                               target_right_stroke_vel=target_right_stroke_vel,
-                               right_input_torque=target_right_input_torque,
-                               target_left_stroke_amp=target_left_stroke_amp,
-                               target_left_stroke_vel=target_left_stroke_vel,
-                               left_input_torque=target_left_input_torque)
-
-        self.mav.step()
-
-        (right_stroke_amp, right_stroke_vel, right_stroke_acc, right_torque,
-         left_stroke_amp, left_stroke_vel, left_stroke_acc, left_torque) = self.mav.get_state_for_motor_torque()
-
-        self.right_motor.reverse(torque=right_torque,
-                                 stroke_angular_amp=right_stroke_amp,
-                                 stroke_angular_vel=right_stroke_vel,
-                                 stroke_angular_acc=right_stroke_acc)
-
-        right_motor_current = self.right_motor.i
-        right_motor_voltage = self.right_motor.v
-
-        self.left_motor.reverse(torque=left_torque,
-                                stroke_angular_amp=left_stroke_amp,
-                                stroke_angular_vel=left_stroke_vel,
-                                stroke_angular_acc=left_stroke_acc)
-
-        left_motor_current = self.left_motor.i
-        left_motor_voltage = self.left_motor.v
-
-        force_info = self.mav.get_constraint_state()
-
-        return [right_stroke_amp, right_stroke_vel,
-                right_stroke_acc, right_torque,
-                right_motor_current, right_motor_voltage,
-                left_stroke_amp, left_stroke_vel,
-                left_stroke_acc, left_torque,
-                left_motor_current, left_motor_voltage] + list(force_info)
 
     def reset(self):
         self.mav.reset()

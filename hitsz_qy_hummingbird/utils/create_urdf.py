@@ -1,5 +1,8 @@
-import os.path
+'''
+This one is used for the Design process,
 
+'''
+import os.path
 import pandas as pd
 import xml.etree.ElementTree as ET
 from sklearn.preprocessing import StandardScaler

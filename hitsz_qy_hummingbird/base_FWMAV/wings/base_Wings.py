@@ -17,15 +17,14 @@ class BaseWing:
     """
 
     def __init__(self,
-                 params: ParamsForBaseWing,
-                 if_log):
+                 params: ParamsForBaseWing):
         self.params = params
-        self.data={}
-        if if_log:
-                self.logger = GLOBAL_CONFIGURATION.logger
-                self.logger.debug(f"the length is {self.params.length}")
-                self.logger.debug(f"the chord of root is {self.params.chord_root}")
-                self.logger.debug(f"the chord of tip is {self.params.chord_tip}")
+        self.data = {}
+        # if if_log:
+        #     self.logger = GLOBAL_CONFIGURATION.logger
+        #     self.logger.debug(f"the length is {self.params.length}")
+        #     self.logger.debug(f"the chord of root is {self.params.chord_root}")
+        #     self.logger.debug(f"the chord of tip is {self.params.chord_tip}")
 
     def calculate_aeroforce_and_torque(self,
                                        stroke_angular_velocity: np.ndarray,
@@ -58,7 +57,7 @@ class BaseWing:
         torque_r_wise = coeff * self.params.c1r3
         forcepos = r_axis * torque_r_wise / aeroforce + c_axis * torque_c_wise / aeroforce
         aerotorque = 1 / 8 * self.params.rho_air * self.params.Crd * self.params.c4 * rotate_vel * rotate_vel
-        if rotate_angular_velocity.dot(r_axis) > 0 :
+        if rotate_angular_velocity.dot(r_axis) > 0:
             aerotorque = aerotorque * -1
         aerotorque = aerotorque * r_axis
         aeroforce = aeroforce * z_axis

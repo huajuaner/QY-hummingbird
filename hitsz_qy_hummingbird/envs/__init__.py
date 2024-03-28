@@ -5,23 +5,23 @@ from gymnasium.envs.registration import register
 register(
     id='hover-qyhb-v0',
     entry_point='hitsz_qy_hummingbird.envs.rl_hover:RLhover',
-    kwargs={'gui': True}  
+    kwargs={'gui': True}
 )
 
 register(
     id='att-qyhb-v0',
     entry_point='hitsz_qy_hummingbird.envs.rl_attitude:RLatt',
-    kwargs={'gui': True}  
+    kwargs={'gui': True}
 )
 
 register(
     id='flip-qyhb-v0',
     entry_point='hitsz_qy_hummingbird.envs.rl_flip:RLflip',
-    kwargs={'gui': True}  
+    kwargs={'gui': True}
 )
 
 register(
     id='escape-qyhb-v0',
     entry_point='hitsz_qy_hummingbird.envs.rl_escape:RLescape',
-    kwargs={'gui': True}  
+    kwargs={'gui': True}
 )

@@ -1,8 +1,3 @@
-'''    
-this controller exsits an error:
-self.left_expr2_diff_sub = self.left_expr2_diff.susb(self.mydict)
-                               ^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'Mul' object has no attribute 'susb' '''
 from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
 from enum import Enum
 from sympy import symbols, sin, cos, asin, diff, pi
@@ -80,9 +75,9 @@ class SynchronousControllerKsplit:
         self.left_expr1_sub = self.left_expr1.subs(self.mydict)
         self.left_expr2_sub = self.left_expr2.subs(self.mydict)
         self.left_expr1_diff_sub = self.left_expr1_diff.subs(self.mydict)
-        self.left_expr2_diff_sub = self.left_expr2_diff.susb(self.mydict)
+        self.left_expr2_diff_sub = self.left_expr2_diff.subs(self.mydict)
 
-    def step(self):
+    def complex_step(self):
         the_time = GLOBAL_CONFIGURATION.TIME
         time = the_time % (1 / self.frequency)
         mydict = [(self.t, time)]
@@ -97,3 +92,14 @@ class SynchronousControllerKsplit:
                     self.right_expr2_diff_sub.subs(mydict),
                     self.left_expr2_sub.subs(mydict),
                     self.left_expr2_diff_sub.subs(mydict)]
+
+    def simple_step(self):
+        the_time = GLOBAL_CONFIGURATION.TIME
+        time = the_time % (1 / self.frequency)
+        mydict = [(self.t, time)]
+        if (time * self.frequency) % 1 < self.split_cycle:
+            return [self.right_expr1_sub.subs(mydict),
+                    self.left_expr1_sub.subs(mydict)]
+        else:
+            return [self.right_expr2_sub.subs(mydict),
+                    self.left_expr2_sub.subs(mydict), ]
