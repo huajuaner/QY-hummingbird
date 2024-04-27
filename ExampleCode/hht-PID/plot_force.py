@@ -1,3 +1,5 @@
+'''plot mean force or torque with control input'''
+
 import csv
 import matplotlib.pyplot as plt
 import numpy as np

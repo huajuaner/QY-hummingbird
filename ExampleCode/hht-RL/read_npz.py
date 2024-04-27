@@ -1,3 +1,5 @@
+'''Reading the reward log file.'''
+
 import numpy as np
 
 DEFAULT_OUTPUT_FOLDER = 'results'

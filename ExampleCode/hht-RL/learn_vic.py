@@ -1,3 +1,6 @@
+"""Continuing training on the old model allows for modifications to the reward function and certain model parameters, 
+but does not permit alterations to the actions and state space."""
+
 import sys
 
 sys.path.append('/home/hht/simul20240421/240328git/QY-hummingbird/')

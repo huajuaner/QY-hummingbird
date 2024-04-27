@@ -1,3 +1,5 @@
+'''Plotting the curve of reward changes over steps.'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 
