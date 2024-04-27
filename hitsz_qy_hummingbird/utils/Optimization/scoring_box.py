@@ -13,9 +13,10 @@ class BoxForScoring:
     The target base_wrapped_mav should run x periods
     The data can be filtered using the spikey filter
     the original data and the filtered data should be restored
-    """
+    """ 
 
     def __init__(self,
+                 urdf_name: str,
                  mav_params: MAV_params,
                  motor_params: ParamsForBaseMotor,
                  wing_params: ParamsForBaseWing,
@@ -23,8 +24,7 @@ class BoxForScoring:
                  periods=GLOBAL_CONFIGURATION.TIMESTEP,
                  beginning  = 0 ,
                  ending = 0 ):
-        self.urdf_name = GLOBAL_CONFIGURATION.urdf_folder_path + "symme0324.urdf"
-        self.mav = BaseMavSequential(urdf_name=self.urdf_name,
+        self.mav = BaseMavSequential(urdf_name=urdf_name,
                                      mav_params=mav_params,
                                      if_gui=False,
                                      if_fixed=True)
@@ -86,12 +86,13 @@ class BoxForScoring:
         pass
 
     def power_loading_scoring(self):
-
+        
         LiftForce = np.array(self.data["LiftForce"][self.beginning:self.ending]).mean()
         PowerConsumption = np.array(self.data["right_power"][self.beginning:self.ending]).mean()
-        print(LiftForce)
+
+        #print(LiftForce)
         print(PowerConsumption)
-        return LiftForce/PowerConsumption
+        return LiftForce,LiftForce/PowerConsumption
 
     def close(self):
         self.wrapped_mav.close()

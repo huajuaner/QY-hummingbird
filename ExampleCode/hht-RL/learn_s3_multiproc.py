@@ -40,12 +40,12 @@ class learn_hover_s3():
             os.makedirs(self.filename + '/')
 
         train_env = make_vec_env(my_env,
-                                 n_envs=2,
+                                 n_envs=20,
                                  seed=0,
                                  vec_env_cls=SubprocVecEnv,
                                  )
         eval_env = make_vec_env(my_env,
-                                n_envs=2,
+                                n_envs=20,
                                 seed=0,
                                 vec_env_cls=SubprocVecEnv,
                                 )
@@ -57,6 +57,9 @@ class learn_hover_s3():
         #### Train the model #######################################
         model = PPO('MlpPolicy',
                     train_env,
+                    batch_size=256, 
+                    gamma=0.98, 
+                    device="cuda",
                     # tensorboard_log=filename+'/tb/',
                     verbose=1)
 
@@ -88,5 +91,6 @@ class learn_hover_s3():
 
 
 if __name__ == "__main__":
+    configuration.ParamsForMAV_rl.change_parameters(sleep_time=0)
     learn = learn_hover_s3()
     learn.train(RLhover)

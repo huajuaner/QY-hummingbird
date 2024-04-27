@@ -31,11 +31,14 @@ class PIDLinear():
         self.differential_voltage_max = 1.5
         self.mean_voltage_max = 1.5
         self.split_cycle_max = 0.05
-        self.hover_voltage = 16
         self.voltage_amplitude_max = 20
 
-        self.frequency = 34
-        self.voltage_amplitude = 18
+
+        self.hover_voltage = 15
+        self.frequency = 28
+
+        self.d_voltage_amplitude = 0
+        self.voltage_amplitude = 0
         self.differential_voltage = 0
         self.mean_voltage = 0
         self.split_cycle = 0
@@ -82,15 +85,16 @@ class PIDLinear():
         return r_voltage, l_voltage
 
     def straight_cos(self):
+        self.voltage_amplitude = self.hover_voltage + self.d_voltage_amplitude
         r_voltage = self.generate_control_signal(self.frequency,
-                                                 self.voltage_amplitude_max,
+                                                 self.voltage_amplitude,
                                                  self.differential_voltage,
                                                  self.mean_voltage,
                                                  self.split_cycle,
                                                  GLOBAL_CONFIGURATION.TIME,
                                                  0, )
         l_voltage = - self.generate_control_signal(self.frequency,
-                                                   self.voltage_amplitude_max,
+                                                   self.voltage_amplitude,
                                                    -self.differential_voltage,
                                                    self.mean_voltage,
                                                    -self.split_cycle,
