@@ -98,6 +98,7 @@ class BaseWing:
                           vecB: np.ndarray):
         cosvalue = vecA.dot(vecB)
         res = cosvalue / (self.definite_value(vecA) * self.definite_value(vecB))
+        res = np.clip(res, -1, 1)
         return acos(res)
 
     def housekeeping(self):

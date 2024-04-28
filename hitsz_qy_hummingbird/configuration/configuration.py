@@ -80,14 +80,14 @@ ParamsForMaxonSpeed6M_rl = ParamsForBaseMotor(terminal_r=12.4,
                                               wing_damping_coeff=1e-7,
                                               nominal_current=0.97,
                                               nominal_voltage=12,
-                                              spring_wire_diameter=0.5,
+                                              spring_wire_diameter=0.7,
                                               spring_number_of_coils=6,
                                               spring_outer_diameter=3.5,
                                               gear_efficiency=0.8,
                                               gear_ratio=10)
 
-ParamsForWing_rl = ParamsForBaseWing(aspect_ratio=9.3,
-                                     taper_ratio=0.66,
+ParamsForWing_rl = ParamsForBaseWing(aspect_ratio=5.2,
+                                     taper_ratio=0.8,
                                      r22=4E-6,
                                      camber_angle=16 / 180 * np.pi,
                                      resolution=500)

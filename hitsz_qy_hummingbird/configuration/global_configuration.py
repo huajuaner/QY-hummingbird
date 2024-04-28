@@ -49,6 +49,8 @@ class GlobalConfigWrapper:
         self.TIMESTEP = 24000
         self.TICKTOCK = 0
         self.TIME = 0
+        self.MAXlift = 0.12
+        self.Bestf = 777
 
     def loginit_ex(self,
                    additional_file_folder,

@@ -9,6 +9,7 @@ import pybullet_data
 import gymnasium as gym
 from gymnasium import spaces
 import random
+from collections import deque
 
 from hitsz_qy_hummingbird.configuration import configuration
 from hitsz_qy_hummingbird.base_FWMAV.MAV.base_MAV_parallel import BaseMavParellel
@@ -29,10 +30,12 @@ class RLMAV(gym.Env,
     """
 
     def __init__(self,
+                 urdf_name:str,
                  mav_params=configuration.ParamsForMAV_rl,
                  motor_params=configuration.ParamsForMaxonSpeed6M_rl,
                  wing_params=configuration.ParamsForWing_rl,
                  gui=False,
+                 control_frequency=1200,
                  ):
 
         self.gui = gui
@@ -42,6 +45,7 @@ class RLMAV(gym.Env,
         else:
             self._p = bullet_client.BulletClient(connection_mode=p.DIRECT)
 
+        self.urdf = urdf_name
         self.mav_params = mav_params
         self.motor_params = motor_params
         self.wing_params = wing_params
@@ -49,17 +53,16 @@ class RLMAV(gym.Env,
         self.flapper_ID = 0
 
         self.physics_client = self._p._client
-        self._housekeeping(self._p, None)
 
         #### Create action and observation spaces ##################
 
         self.d_voltage_amplitude_max = 4
-        self.differential_voltage_max = 1  # 3
-        self.mean_voltage_max = 0.5  # 3.5
+        self.differential_voltage_max = 2 # 3
+        self.mean_voltage_max = 3  # 3.5
         self.split_cycle_max = 0.1  # 0.1
         self.voltage_amplitude_max = 20
 
-        self.hover_voltage_amplitude = 14
+        self.hover_voltage_amplitude = 10
         self.differential_voltage = 0
         self.mean_voltage = 0
         self.split_cycle = 0
@@ -69,26 +72,35 @@ class RLMAV(gym.Env,
         self.right_stroke_amp = 0
         self.left_stroke_amp = 0
 
+       # wing stroke frequency
+        self.frequency = 28
+        # pyb and control frequency
+        self.PYB_FREQ = GLOBAL_CONFIGURATION.TIMESTEP
+        self.CTRL_FREQ = control_frequency
+        self.PYB_STEPS_PER_CTRL = int(self.PYB_FREQ / self.CTRL_FREQ)
+        self.ctrlstep = 0
+        self.r_area =0
+
+        #Create a buffer for the last 1/（10*control_frequency） of actions 
+        self.ACTION_BUFFER_SIZE = int(self.CTRL_FREQ//10)
+        self.action_buffer = deque(maxlen=self.ACTION_BUFFER_SIZE)
+        for i in range(self.ACTION_BUFFER_SIZE):
+            self.action_buffer.append(np.zeros(4))
+        #Create a obs buffer
+        self.OBS_BUFFER_SIZE = 40
+        self.obs_buffer = deque(maxlen=self.OBS_BUFFER_SIZE)
+        for i in range(self.OBS_BUFFER_SIZE):
+            self.obs_buffer.append(np.zeros(12))
+
         self.action_space = self._actionSpace()
         self.observation_space = self._observationSpace()
 
-        # wing stroke frequency
-        self.frequency = 34
-        # pyb and control frequency
-        self.PYB_FREQ = GLOBAL_CONFIGURATION.TIMESTEP
-        self.CTRL_FREQ = 1200
-        self.PYB_STEPS_PER_CTRL = int(self.PYB_FREQ / self.CTRL_FREQ)
-
         self.action = np.array([0, 0, 0, 0]).reshape(4, )
-
-        self.TARGET_POS = np.array([0, 0, 1])
-
-        # pybullet and control frequency
-        self.PYB_FREQ = GLOBAL_CONFIGURATION.TIMESTEP
-        self.CTRL_FREQ = 2400
 
         # Limiting the duration of a training episode
         self.EPISODE_LEN_SEC = 10
+
+        self._housekeeping(self._p, None)
 
     def step(self,
              action):
@@ -102,7 +114,8 @@ class RLMAV(gym.Env,
             self.draw_zaxis_of_bf()
             GLOBAL_CONFIGURATION.step()
 
-        self.step_counter = GLOBAL_CONFIGURATION.TICKTOCK
+        self.step_counter = GLOBAL_CONFIGURATION.TICKTOCK # TICKTOCK has been increased n steps in the loop
+        self.ctrlstep = self.ctrlstep + 1
         self._updateKinematic()
         self.action = action
         obs = self._computeObs()
@@ -260,8 +273,6 @@ class RLMAV(gym.Env,
         self._housekeeping(self._p, seed)
         #### Update and store the FWMAV's kinematic information #####
         self._updateKinematic()
-        self.action = np.array([0, 0, 0, 0]).reshape(4, )
-
         initial_obs = self._computeObs()
         initial_info = self._computeInfo()
         return initial_obs, initial_info
@@ -278,7 +289,6 @@ class RLMAV(gym.Env,
         self.mean_voltage
         self.d_split_cycle
         """
-
         return spaces.Box(
             low=np.array([-1, -1, -1, -1]),
             high=np.array([1, 1, 1, 1]),
@@ -289,7 +299,9 @@ class RLMAV(gym.Env,
     def _preAction(self,
                    action
                    ):
-        '''De-normalization'''
+        '''store last action and De-normalization'''
+        #Inserting at the head of the deque
+        self.action_buffer.appendleft(action)
         return (self.d_voltage_amplitude_max * action[0],
                 self.differential_voltage_max * action[1],
                 self.mean_voltage_max * action[2],
@@ -304,11 +316,27 @@ class RLMAV(gym.Env,
         """
         # (right_stroke_amp, right_stroke_vel, right_stroke_acc, right_torque,
         #  left_stroke_amp, left_stroke_vel, left_stroke_acc, left_torque) = self.mav.get_state_for_motor_torque()
-        #### Observation vector   ### X        Y        Z        R       P       Y       VX       VY       VZ       WX       WY       WZ        U       dU        U0       sc
-        # obs_lower_bound = np.array([-1,      -1,      0,      -1,     -1,     -1,     -1,      -1,      -1,      -1,      -1,      -1,       -1,      -1,       -1,      -1])
+        #### Observation vector   ### eX        eY        eZ        er       ep       ey       VX       VY       VZ       WX       WY       WZ        U       dU        U0       sc
+        # obs_lower_bound = np.array([-1,      -1,      -1,      -1,     -1,     -1,     -1,      -1,      -1,      -1,      -1,      -1,       -1,      -1,       -1,      -1])
         # obs_upper_bound = np.array([1,       1,       1,       1,      1,      1,      1,       1,       1,       1,       1,       1,        1,       1,       -1,      -1])
-        return spaces.Box(low=np.array([-1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]),
-                          high=np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]),
+        # low=np.array([-1,-1, 0, -np.pi,-np.pi/2, -np.pi, -np.inf,-np.inf,-np.inf, -np.inf,-np.inf,-np.inf,])
+        # high=np.array([1, 1, 1,  np.pi, np.pi/2,  np.pi,    np.inf,np.inf,np.inf,     np.inf,np.inf,np.inf,])
+        obs_low = np.array([-0.5, -0.5, -0.5, -np.pi, -np.pi/2, -np.pi, -5, -5, -5, -100, -100, -100])
+        obs_high = np.array([0.5, 0.5, 0.5, np.pi, np.pi/2, np.pi, 5, 5, 5, 100, 100, 100])
+        tiled_obs_low = np.tile(obs_low, self.OBS_BUFFER_SIZE)
+        tiled_obs_high = np.tile(obs_high, self.OBS_BUFFER_SIZE)
+
+        act_low = np.array([-1, -1, -1, -1])
+        act_high = np.array([1, 1, 1, 1])
+        tiled_act_low = np.tile(act_low, self.ACTION_BUFFER_SIZE)
+        tiled_act_high = np.tile(act_high, self.ACTION_BUFFER_SIZE)
+
+        # Concatenate 
+        low = np.hstack([tiled_obs_low, tiled_act_low])
+        high = np.hstack([tiled_obs_high, tiled_act_high])
+
+        return spaces.Box(low,
+                          high,
                           dtype=np.float32
                           )
 
@@ -327,17 +355,23 @@ class RLMAV(gym.Env,
             A Box() of shape (16,).
 
         """
-        obs = self._clipAndNormalizeState(self._getDroneStateVector())
-        # OBS SPACE OF SIZE 16
-        # XYZ, RPY, V, W，ACT
-        ret = obs[:].reshape(16, )
+        cur_obs = self._getDroneStateVector()
+        self.obs_buffer.appendleft(cur_obs)
+
+        obs_flat = np.concatenate(self.obs_buffer)
+        act_flat = np.concatenate(self.action_buffer)
+        obs = np.concatenate([obs_flat, act_flat])
+        ret = obs[:].reshape((self.OBS_BUFFER_SIZE*12+self.ACTION_BUFFER_SIZE*4), )
         return ret.astype('float32')
 
     def _getDroneStateVector(self):
-
-        state = np.hstack((self.pos[:], self.rpy[:],
-                           self.vel[:], self.ang_v[:], self.action[:]))
-        return state.reshape(16, )
+        # OBS SPACE OF SIZE 12
+        # eXYZ, erpy, V, W
+        epos = self.pos[:]-self.TARGET_POS[:]
+        erpy = self.rpy[:]-self.TARGET_RPY[:]
+        state = np.hstack((epos[:], erpy[:],
+                           self.vel[:], self.ang_v[:]))
+        return state.reshape(12, )
 
     def _clipAndNormalizeState(self,
                                state):
@@ -433,17 +467,17 @@ class RLMAV(gym.Env,
         """
 
         state = self._getDroneStateVector()
-        if np.linalg.norm(self.TARGET_POS - state[0:3]) < .0001:
-            return True
-        else:
-            return False
+        # if np.linalg.norm(state[0:3]) < .0001 and state[8]<.0001:
+        #     return True
+        # else:
+        return False
 
     def _computeTruncated(self):
         """Computes the current truncated value(s).
         """
         state = self._getDroneStateVector()
         #  If flying too far
-        if (abs(state[0]) > 1.5 or abs(state[1]) > 1.5 or state[2] > 2.0
+        if (abs(state[0]) > 0.3 or abs(state[1]) > 0.3 or abs(state[2]) > 0.3
                 or abs(state[3]) > np.pi / 4 or abs(state[4]) > np.pi / 4 or abs(state[5]) > np.pi / 4):
             return True
         # Maintain vertical attitude
@@ -471,24 +505,25 @@ class RLMAV(gym.Env,
 
     def _housekeeping(self, p_this, seed0):
 
-        # urdf_creator = URDFCreator(gear_ratio=self.motor_params.gear_ratio,
-        #                            r=self.wing_params.length,
-        #                            chord_root=self.wing_params.chord_root,
-        #                            chord_tip=self.wing_params.chord_tip)
-        # urdf_name = urdf_creator.write_the_urdf()
+        # # Randomize initial position and attitude
+        # if seed0:
+        #     seed = seed0
+        # else:
+        #     seed = random.randint(0, 1000)
+        # z_position = np.random.uniform(0.4, 0.6)
+        # random_pos = np.array([0, 0, z_position])
+        # np.random.seed(seed)
+        # random_att = np.pi / 72 * (2 * np.random.rand(3) - [1, 1, 1])
+        # # random_pos=[0,0,0.4]
+        # self.mav_params.change_parameters(initial_xyz=random_pos)
+        # self.mav_params.change_parameters(initial_rpy=random_att)
 
-        # Randomize initial attitude
-        if seed0:
-            seed = seed0
-        else:
-            seed = random.randint(0, 1000)
-        np.random.seed(seed)
-        random_array = np.pi / 72 * (2 * np.random.rand(3) - [1, 1, 1])
-        self.mav_params.change_parameters(initial_rpy=random_array)
-
+        random_pos=[0,0,0.45]
+        self.mav_params.change_parameters(initial_xyz=random_pos)
+        self.mav_params.change_parameters(initial_rpy=[0,0,0])
         # Create MAV
         self.mav = BaseMavParellel(
-            urdf_name='D://graduate//fwmav//simul2024//240325git//QY-hummingbird//URDFdir//symme0324.urdf',
+            urdf_name= self.urdf,
             mav_params=self.mav_params,
             pyb=p_this,
             if_gui=self.gui,
@@ -497,11 +532,13 @@ class RLMAV(gym.Env,
 
         self.right_motor = BaseBLDC(self.motor_params)
         self.left_motor = BaseBLDC(self.motor_params)
-        self.right_wing = BaseWing(self.wing_params, if_log=False)
-        self.left_wing = BaseWing(self.wing_params, if_log=False)
+        self.right_wing = BaseWing(self.wing_params)
+        self.left_wing = BaseWing(self.wing_params)
 
         GLOBAL_CONFIGURATION.TICKTOCK = 0
         self.step_counter = 0
+        self.ctrlstep =0
+        self.r_area =0
 
         # data clear
         self.mav.housekeeping()

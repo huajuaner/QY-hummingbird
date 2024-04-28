@@ -4,8 +4,10 @@ Given gradually increasing amplitudes.
 '''
 import sys
 
-sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
+sys.path.append('D://graduate//fwmav//simul2024//240414//QY-hummingbird')
 from hitsz_qy_hummingbird.wrapper.wrapped_mav_for_design import WrappedMAVDesign
+from hitsz_qy_hummingbird.wrapper.wrapped_mav_for_PID import WrappedMAVRl
+from hitsz_qy_hummingbird.base_FWMAV.MAV.base_MAV_sequential import BaseMavSequential
 from hitsz_qy_hummingbird.configuration import configuration
 from hitsz_qy_hummingbird.base_FWMAV.motor.motor_params import ParamsForBaseMotor
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
@@ -15,28 +17,43 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
 
-GLOBAL_CONFIGURATION.logger_init()
+
+ng =10
+ar =5.2
+tr =0.8
+r22 =4e-6
 motor_params = configuration.ParamsForMaxonSpeed6M
-motor_params.change_parameters(spring_wire_diameter=0.5,
+motor_params.change_parameters(spring_wire_diameter=0.7,
                                spring_number_of_coils=6,
                                spring_outer_diameter=3.5,
                                gear_efficiency=0.8,
-                               gear_ratio=10)
+                               gear_ratio=ng)
 
-wing_params = ParamsForBaseWing(aspect_ratio=9.3,
-                                taper_ratio=0.66,
-                                r22=4E-6,
+wing_params = ParamsForBaseWing(aspect_ratio=ar,
+                                taper_ratio=tr,
+                                r22=r22,
                                 camber_angle=16 / 180 * np.pi,
                                 resolution=500)
 
-mav_params = configuration.ParamsForMAV_One.change_parameters(sleep_time=0.001)
+configuration.ParamsForMAV_One.change_parameters(sleep_time=0.001)
 
-mav = WrappedMAVDesign(
-    if_gui=True,
-    if_fixed=False,
-    mav_params=configuration.ParamsForMAV_One,
-    motor_params=motor_params,
-    wing_params=wing_params)
+# urdf_creator = URDFCreator(gear_ratio=ng,
+#                             aspect_ratio=ar,
+#                             taper_ratio=tr,
+#                             r22=r22,)
+# urdf_name = urdf_creator.write_the_urdf()
+temp_urdf = GLOBAL_CONFIGURATION.temporary_urdf_path + f"Ng_{ng}_AR_{ar}_TR_{tr}_R22_{r22}.urdf"
+
+basemav = BaseMavSequential(
+                    urdf_name=temp_urdf,
+                    mav_params=configuration.ParamsForMAV_One,
+                    if_gui=True,
+                    if_fixed=False,
+)
+
+mav = WrappedMAVRl(basemav,
+                   motor_params=motor_params,
+                   wing_params=wing_params)
 
 print("a_body_unique_id is        \n" + str(mav.mav.body_unique_id))
 

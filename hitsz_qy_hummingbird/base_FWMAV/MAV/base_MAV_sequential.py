@@ -542,7 +542,7 @@ class BaseMavSequential(BaseMAV):
         """
         reset the base position orientation and velocity
         """
-        self.logger.debug("The MAV is Reset")
+        #self.logger.debug("The MAV is Reset")
         p.resetBasePositionAndOrientation(self.body_unique_id,
                                           posObj=self.params.initial_xyz,
                                           ornObj=self.params.initial_orientation)
