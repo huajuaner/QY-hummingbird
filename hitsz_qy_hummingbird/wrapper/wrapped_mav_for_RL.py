@@ -9,6 +9,7 @@ import pybullet_data
 import gymnasium as gym
 from gymnasium import spaces
 import random
+import time
 from collections import deque
 
 from hitsz_qy_hummingbird.configuration import configuration
@@ -35,32 +36,64 @@ class RLMAV(gym.Env,
                  motor_params=configuration.ParamsForMaxonSpeed6M_rl,
                  wing_params=configuration.ParamsForWing_rl,
                  gui=False,
+                 pyb=None,
+                 client=None,
                  control_frequency=1200,
                  ):
 
         self.gui = gui
-        # Parallel training, where the BulletClient instance has the same API as the pybullet instance.
-        if gui:
-            self._p = bullet_client.BulletClient(connection_mode=p.GUI)
+        if pyb==None:
+            # Parallel training, where the BulletClient instance has the same API as the pybullet instance.
+            if gui:
+                self._p = bullet_client.BulletClient(connection_mode=p.GUI)
+            else:
+                self._p = bullet_client.BulletClient(connection_mode=p.DIRECT)
+            self.physics_client = self._p._client
+
+            lightPosition = [0, 0, 20]
+            self._p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+            self._p.configureDebugVisualizer(self._p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
+            self._p.configureDebugVisualizer(self._p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
+            self._p.configureDebugVisualizer(self._p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
+            self._p.configureDebugVisualizer(lightPosition=lightPosition)
+            self._p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+            # self.draw_a_setpoint_ball()
+
+            self._p.setGravity(0,0,-9.8)
+
+            self._p.loadURDF("plane.urdf")
+
+            # stepSimulation performs all operations, such as collision detection, constraint solving, and integration, in a single forward dynamics simulation step. 
+            # The default time step is 1/240 seconds, which can be changed using the setTimeStep or setPhysicsEngineParameter API.
+            # The number of solver iterations and the error reduction parameters (erp) for contact, friction, and non-contact joints are related to the time step. 
+            # If you change the time step, you may need to adjust these values accordingly, especially the erp values.
+            self._p.setTimeStep(1 / GLOBAL_CONFIGURATION.TIMESTEP)
         else:
-            self._p = bullet_client.BulletClient(connection_mode=p.DIRECT)
+            self._p = pyb
+            self.physics_client=client
+
+        self.flapper_ID = 0
 
         self.urdf = urdf_name
         self.mav_params = mav_params
         self.motor_params = motor_params
         self.wing_params = wing_params
 
-        self.flapper_ID = 0
-
-        self.physics_client = self._p._client
-
         #### Create action and observation spaces ##################
 
+        # self.d_voltage_amplitude_max = 4
+        # self.differential_voltage_max = 2 # 3
+        # self.mean_voltage_max = 3  # 3.5
+        # self.split_cycle_max = 0.1  # 0.1
+        # self.voltage_amplitude_max = 20
+
+        # self.hover_voltage_amplitude = 10
         self.d_voltage_amplitude_max = 4
         self.differential_voltage_max = 2 # 3
         self.mean_voltage_max = 3  # 3.5
         self.split_cycle_max = 0.1  # 0.1
-        self.voltage_amplitude_max = 20
+        self.voltage_amplitude_max = 20 #20
 
         self.hover_voltage_amplitude = 10
         self.differential_voltage = 0
@@ -78,10 +111,12 @@ class RLMAV(gym.Env,
         self.PYB_FREQ = GLOBAL_CONFIGURATION.TIMESTEP
         self.CTRL_FREQ = control_frequency
         self.PYB_STEPS_PER_CTRL = int(self.PYB_FREQ / self.CTRL_FREQ)
+
+        self.step_counter = 0
         self.ctrlstep = 0
         self.r_area =0
 
-        #Create a buffer for the last 1/（10*control_frequency） of actions 
+        #Create a buffer for the last 120 steps of actions 
         self.ACTION_BUFFER_SIZE = int(self.CTRL_FREQ//10)
         self.action_buffer = deque(maxlen=self.ACTION_BUFFER_SIZE)
         for i in range(self.ACTION_BUFFER_SIZE):
@@ -95,10 +130,8 @@ class RLMAV(gym.Env,
         self.action_space = self._actionSpace()
         self.observation_space = self._observationSpace()
 
-        self.action = np.array([0, 0, 0, 0]).reshape(4, )
-
         # Limiting the duration of a training episode
-        self.EPISODE_LEN_SEC = 10
+        self.EPISODE_LEN_SEC = 15
 
         self._housekeeping(self._p, None)
 
@@ -111,13 +144,36 @@ class RLMAV(gym.Env,
             self.drive_wing(action)
             self.apply_aeroFT()
             self.mav.step()
-            self.draw_zaxis_of_bf()
-            GLOBAL_CONFIGURATION.step()
+            # self.draw_xaxis_of_bf()
+            self.step_counter = self.step_counter+1
 
-        self.step_counter = GLOBAL_CONFIGURATION.TICKTOCK # TICKTOCK has been increased n steps in the loop
+        # self.step_counter = GLOBAL_CONFIGURATION.TICKTOCK # TICKTOCK has been increased n steps in the loop
         self.ctrlstep = self.ctrlstep + 1
+        # self.draw_trac()
         self._updateKinematic()
-        self.action = action
+        obs = self._computeObs()
+        reward = self._computeReward()
+        terminated = self._computeTerminated()
+        truncated = self._computeTruncated()
+        info = self._computeInfo()
+        return obs, reward, terminated, truncated, info
+
+    def prestep(self,action,sleepflag):
+        if sleepflag:
+            pass
+        else:
+            self.drive_wing(action)
+            self.apply_aeroFT()
+            self.step_counter = self.step_counter+1
+    def step_after_pyb(self,
+             action):
+        """
+        
+        """   
+        # self.draw_zaxis_of_bf()
+        # self.step_counter = self.step_counter+1
+        # self.draw_trac()
+        self._updateKinematic()
         obs = self._computeObs()
         reward = self._computeReward()
         terminated = self._computeTerminated()
@@ -142,14 +198,14 @@ class RLMAV(gym.Env,
                                                       -self.differential_voltage,
                                                       self.mean_voltage,
                                                       self.split_cycle,
-                                                      GLOBAL_CONFIGURATION.TICKTOCK / GLOBAL_CONFIGURATION.TIMESTEP,
+                                                      self.step_counter / GLOBAL_CONFIGURATION.TIMESTEP,
                                                       0, )
         self.l_voltage = -self.generate_control_signal(self.frequency,
                                                        self.voltage_amplitude,
                                                        self.differential_voltage,
                                                        self.mean_voltage,
                                                        -self.split_cycle,
-                                                       GLOBAL_CONFIGURATION.TICKTOCK / GLOBAL_CONFIGURATION.TIMESTEP,
+                                                       self.step_counter / GLOBAL_CONFIGURATION.TIMESTEP,
                                                        0, )
         self.r_voltage = np.clip(self.r_voltage, -self.voltage_amplitude_max, self.voltage_amplitude_max)
         self.l_voltage = np.clip(self.l_voltage, -self.voltage_amplitude_max, self.voltage_amplitude_max)
@@ -219,6 +275,14 @@ class RLMAV(gym.Env,
             torque=left_aerotorque
         )
 
+    def draw_xaxis_of_bf(self):
+        flapperPos, flapperOrn = self._p.getBasePositionAndOrientation(self.flapper_ID)
+        flapperRot = np.array(self._p.getMatrixFromQuaternion(flapperOrn)).reshape(3, 3)
+        x_axis = flapperRot[:, 0]
+        # print(f"zaxis={zaxis}")
+        # print(f"cubePos+0.5*zaxis={cubePos+zaxis}")
+        self.mav.draw_a_line(flapperPos, flapperPos + 0.03 * x_axis, [1, 0, 0], f'torso')
+
     def draw_zaxis_of_bf(self):
         flapperPos, flapperOrn = self._p.getBasePositionAndOrientation(self.flapper_ID)
         flapperRot = np.array(self._p.getMatrixFromQuaternion(flapperOrn)).reshape(3, 3)
@@ -268,7 +332,8 @@ class RLMAV(gym.Env,
             Additional information as a dictionary, check the implementation of `_computeInfo()`
         """
 
-        self._p.resetSimulation(physicsClientId=self.physics_client)
+        # self._p.resetSimulation(physicsClientId=self.physics_client)
+        self._p.removeBody(self.flapper_ID)
         #### Housekeeping ##########################################
         self._housekeeping(self._p, seed)
         #### Update and store the FWMAV's kinematic information #####
@@ -366,10 +431,10 @@ class RLMAV(gym.Env,
 
     def _getDroneStateVector(self):
         # OBS SPACE OF SIZE 12
-        # eXYZ, erpy, V, W
-        epos = self.pos[:]-self.TARGET_POS[:]
-        erpy = self.rpy[:]-self.TARGET_RPY[:]
-        state = np.hstack((epos[:], erpy[:],
+        # XYZ, rpy, V, W
+        pos = self.pos[:]
+        rpy = self.rpy[:]
+        state = np.hstack((pos[:], rpy[:],
                            self.vel[:], self.ang_v[:]))
         return state.reshape(12, )
 
@@ -466,7 +531,7 @@ class RLMAV(gym.Env,
 
         """
 
-        state = self._getDroneStateVector()
+        # state = self._getDroneStateVector()
         # if np.linalg.norm(state[0:3]) < .0001 and state[8]<.0001:
         #     return True
         # else:
@@ -504,23 +569,6 @@ class RLMAV(gym.Env,
         return {"room": 1617}
 
     def _housekeeping(self, p_this, seed0):
-
-        # # Randomize initial position and attitude
-        # if seed0:
-        #     seed = seed0
-        # else:
-        #     seed = random.randint(0, 1000)
-        # z_position = np.random.uniform(0.4, 0.6)
-        # random_pos = np.array([0, 0, z_position])
-        # np.random.seed(seed)
-        # random_att = np.pi / 72 * (2 * np.random.rand(3) - [1, 1, 1])
-        # # random_pos=[0,0,0.4]
-        # self.mav_params.change_parameters(initial_xyz=random_pos)
-        # self.mav_params.change_parameters(initial_rpy=random_att)
-
-        random_pos=[0,0,0.45]
-        self.mav_params.change_parameters(initial_xyz=random_pos)
-        self.mav_params.change_parameters(initial_rpy=[0,0,0])
         # Create MAV
         self.mav = BaseMavParellel(
             urdf_name= self.urdf,
@@ -548,3 +596,31 @@ class RLMAV(gym.Env,
         self.right_wing.housekeeping()
 
         # self.logger = GLOBAL_CONFIGURATION.logger
+
+    def draw_trac(self):
+        flapperPos,_= self._p.getBasePositionAndOrientation(self.flapper_ID,
+                                                    physicsClientId=self.physics_client)
+        self._p.addUserDebugLine(flapperPos, flapperPos + 0.001*np.array([0., 0., 1.0]),[1, 0, 0])
+
+    def erase_trac(self):
+        self._p.removeAllUserDebugItems()
+
+    def draw_a_setpoint_ball(self):
+        # 定义球的位置和半径
+        sphere_radius = 0.005
+        sphere_position = [1, 0, 0.5]
+
+        # 在给定位置创建一个纯视觉球体
+        visual_shape_id = self._p.createVisualShape(shapeType=p.GEOM_SPHERE,
+                                            radius=sphere_radius,
+                                            rgbaColor=[1, 1, 0, 0.7], 
+                                            specularColor=[1, 1, 1, 1])
+
+        # 由于不需要碰撞形状，直接创建多体只使用视觉形状
+        sphere_body_id = self._p.createMultiBody(baseMass=0,
+                                        baseVisualShapeIndex=visual_shape_id,
+                                        basePosition=sphere_position)
+
+    def pause(self):
+        for i in range(self.PYB_STEPS_PER_CTRL):
+            self.mav.pause()

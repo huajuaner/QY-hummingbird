@@ -1,5 +1,6 @@
-'''this file runs the hht-PID control with PIDLinear model when flag_pid=1, and
-runs the manually set voltage when flag_pid=0'''
+'''This file runs the hht-PID control with PIDLinear model when flag_pid=1, and
+runs the manually set voltage when flag_pid=0.
+Record the force info during per control step.'''
 
 import sys
 
@@ -38,7 +39,7 @@ wing_params = ParamsForBaseWing(aspect_ratio=ar,
                                 camber_angle=16 / 180 * np.pi,
                                 resolution=500)
 
-configuration.ParamsForMAV_One.change_parameters(sleep_time=0.001)
+configuration.ParamsForMAV_One.change_parameters(sleep_time=0.0001)
 
 # urdf_creator = URDFCreator(gear_ratio=ng,
 #                             aspect_ratio=ar,
@@ -71,12 +72,12 @@ model.ang_ef_target_yaw = 0
 data = {}
 data['right_stroke_amp'] = []
 data['left_stroke_amp'] = []
-data['right_stroke_vel'] = []
-data['left_stroke_vel'] = []
+data['right_rotate_amp'] = []
+data['left_rotate_amp'] = []
+# data['right_stroke_vel'] = []
+# data['left_stroke_vel'] = []
 data['r_u'] = []
-# data['r_t']=[]
 data['l_u'] = []
-# data['l_t']=[]
 data['lift_force'] = []
 data['roll_torque'] = []
 data['pitch_torque'] = []
@@ -96,7 +97,7 @@ print(wingobs)
 cnt = 0
 wingbeat = 6
 gradual = 0
-durtime = mav.CTRL_FREQ//20
+durtime = mav.CTRL_FREQ//2
 while cnt < int (durtime):
 
     # if (cnt < gradual):
@@ -115,7 +116,8 @@ while cnt < int (durtime):
 
     if (cnt > gradual - 1):
         if flag_pid == 0:
-            r_voltage, l_voltage = model.straight_cos()
+            r_voltage = 0
+            _,l_voltage = model.straight_cos()
         else:
             r_voltage, l_voltage = model.predict(obs)
         action = [r_voltage, l_voltage]
@@ -125,8 +127,8 @@ while cnt < int (durtime):
 
     data['right_stroke_amp'].append(wingobs[0])
     data['left_stroke_amp'].append(wingobs[1])
-    data['right_stroke_vel'].append(wingobs[2])
-    data['left_stroke_vel'].append(wingobs[3])
+    data['right_rotate_amp'].append(wingobs[2])
+    data['left_rotate_amp'].append(wingobs[3])
     data['r_u'].append(r_voltage)
     # data['r_t'].append(r_t)
     data['l_u'].append(l_voltage)
@@ -150,9 +152,9 @@ data = pd.DataFrame(
 data.to_csv("tem.csv", index=False)
 
 smoothed_lift_force = medfilt(data['lift_force'], kernel_size=3)
-smoothed_roll_torque = medfilt(data['roll_torque'], kernel_size=11)
+smoothed_roll_torque = medfilt(data['roll_torque'], kernel_size=5)
 smoothed_pitch_torque = medfilt(data['pitch_torque'], kernel_size=3)
-smoothed_yaw_torque = medfilt(data['yaw_torque'], kernel_size=11)
+smoothed_yaw_torque = medfilt(data['yaw_torque'], kernel_size=3)
 
 # plt.plot(data.index, data['right_stroke_amp'], label='Right Stroke Amp')
 # plt.plot(data.index, data['left_stroke_amp'], label='Left Stroke Amp')
@@ -189,7 +191,8 @@ color_deep_blue = (0.0, 0.0, 0.7)
 
 
 fig2, ax3 = plt.subplots(3, 2, figsize=(10, 6))
-fig2.subplots_adjust(wspace=0.25,hspace=0.35)
+
+fig2.subplots_adjust(left=0.067, right=0.948,top=0.962,bottom=0.067, wspace=0.32,hspace=0.54)
 alp_size=16
 tick_size = 16
 #### Column ################################################
@@ -198,39 +201,37 @@ col = 0
 ####  ###################################################
 row = 0
 
-ax3[row, col].plot(data.index, data['l_u'], color=color4 , linewidth=1)
-ax3[row, col].set_xlabel('control step',loc='right', fontsize=alp_size)
-ax3[row, col].set_ylabel('left voltage(V)', color=color4 , fontsize=alp_size) 
+ax3[row, col].plot(data.index/1200, data['l_u'], color='tab:red' , linewidth=1)
+ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+ax3[row, col].set_ylabel('voltage(V)', color='tab:red', fontsize=alp_size) 
 ax3[row, col].tick_params(axis='x', labelsize=tick_size )
-ax3[row, col].tick_params(axis='y', labelcolor=color4, labelsize=tick_size)
+ax3[row, col].tick_params(axis='y', labelcolor='tab:red', labelsize=tick_size)
 ax3[row, col].set_yticks([-30,-20,-10,0,10,20,30])
 # ax3[row, col].text(durtime/2, -5, '(' + chr(97) + ')', fontsize=12, ha='left',va='baseline')
 
 ax4 = ax3[row, col].twinx()
-ax4.plot(data.index, 180 * data['left_stroke_amp'] / np.pi, color=color2, linewidth=1)
-ax4.set_ylabel('left stroke angle(°)', color=color2, fontsize=alp_size)
+ax4.plot(data.index/1200, 180 * data['left_stroke_amp'] / np.pi, color='tab:orange', linewidth=1)
+ax4.set_ylabel('stroke angle(°)', color='tab:orange', fontsize=alp_size)
 ax4.set_yticks([-75,-50,-25,0,25,50,75])
-ax4.tick_params(axis='y', labelcolor=color2, labelsize=tick_size)
+ax4.tick_params(axis='y', labelcolor='tab:orange', labelsize=tick_size)
 
 row = 1
 
-ax3[row, col].plot(data.index, smoothed_lift_force)
-ax3[row, col].set_xlabel('control step',loc='right', fontsize=alp_size)
-ax3[row, col].set_ylabel('lift force (N)', fontsize=alp_size)
+ax3[row, col].plot(data.index/1200, smoothed_lift_force)
+ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+ax3[row, col].set_ylabel('$F_z$ (N)', fontsize=alp_size)
 ax3[row, col].set_yticks([-0.2,-0.1, 0, 0.1, 0.2, 0.3, 0.4])
 ax3[row, col].tick_params(axis='x', labelsize=tick_size )
 ax3[row, col].tick_params(axis='y', labelsize=tick_size )
 
 row = 2
 
-ax3[row, col].plot(data.index, smoothed_roll_torque)
-ax3[row, col].set_xlabel('control step',loc='right', fontsize=alp_size)
-ax3[row, col].set_ylabel('roll torque (N$\\cdot$m)', fontsize=alp_size)
+ax3[row, col].plot(data.index/1200, 1e3*smoothed_pitch_torque)
+ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+ax3[row, col].set_ylabel('pitch torque (N$\\cdot$mm)', fontsize=alp_size)
 ax3[row, col].tick_params(axis='x', labelsize=tick_size )
 ax3[row, col].tick_params(axis='y', labelsize=tick_size )
-# 调整科学计数法的字体大小
-ax3[row, col].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
-ax3[row, col].yaxis.offsetText.set_fontsize(tick_size)
+
 
 #### Column ################################################
 col = 1
@@ -238,36 +239,53 @@ col = 1
 #### XYZ ###################################################
 row = 0
 
-ax3[row, col].plot(data.index, data['r_u'], color=color4 , linewidth=1)
-ax3[row, col].set_xlabel('control step',loc='right', fontsize=alp_size)
-ax3[row, col].set_ylabel('right voltage(V)', color=color4 , fontsize=alp_size) 
+# ax3[row, col].plot(data.index/1200, data['r_u'], color='tab:red' , linewidth=1)
+# ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+# ax3[row, col].set_ylabel('right voltage(V)', color='tab:red' , fontsize=alp_size) 
+# ax3[row, col].tick_params(axis='x', labelsize=tick_size )
+# ax3[row, col].tick_params(axis='y', labelcolor='tab:red', labelsize=tick_size)
+# ax3[row, col].set_yticks([-30,-20,-10,0,10,20,30])
+
+# ax5 = ax3[row, col].twinx()
+# ax5.plot(data.index/1200, 180 * data['right_stroke_amp'] / np.pi, color='tab:orange', linewidth=1)
+# ax5.set_ylabel('right stroke angle(°)', color='tab:orange', fontsize=alp_size)
+# ax5.set_yticks([-75,-50,-25,0,25,50,75])
+# ax5.tick_params(axis='y', labelcolor='tab:orange', labelsize=tick_size)
+ax3[row, col].plot(data.index/1200, data['l_u'], color='tab:red' , linewidth=1)
+ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+ax3[row, col].set_ylabel('voltage(V)', color='tab:red' , fontsize=alp_size) 
 ax3[row, col].tick_params(axis='x', labelsize=tick_size )
-ax3[row, col].tick_params(axis='y', labelcolor=color4, labelsize=tick_size)
+ax3[row, col].tick_params(axis='y', labelcolor='tab:red', labelsize=tick_size)
 ax3[row, col].set_yticks([-30,-20,-10,0,10,20,30])
 
 ax5 = ax3[row, col].twinx()
-ax5.plot(data.index, 180 * data['right_stroke_amp'] / np.pi, color=color2, linewidth=1)
-ax5.set_ylabel('right stroke angle(°)', color=color2, fontsize=alp_size)
+ax5.plot(data.index/1200, 180 * data['left_rotate_amp'] / np.pi, color='tab:green', linewidth=1)
+ax5.set_ylabel('rotation angle(°)', color='tab:green', fontsize=alp_size)
 ax5.set_yticks([-75,-50,-25,0,25,50,75])
-ax5.tick_params(axis='y', labelcolor=color2, labelsize=tick_size)
+ax5.tick_params(axis='y', labelcolor='tab:green', labelsize=tick_size)
 
 row = 1
 
-ax3[row, col].plot(data.index, smoothed_pitch_torque)
-ax3[row, col].set_xlabel('control step',loc='right', fontsize=alp_size)
-ax3[row, col].set_ylabel('pitch torque (N$\\cdot$m)', fontsize=alp_size)
+ax3[row, col].plot(data.index/1200, 1e3*smoothed_roll_torque)
+ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+ax3[row, col].set_ylabel('roll torque (N$\\cdot$mm)', fontsize=alp_size)
+ax3[row, col].set_yticks([-0.1,0,0.1])
 ax3[row, col].tick_params(axis='x', labelsize=tick_size )
 ax3[row, col].tick_params(axis='y', labelsize=tick_size )
+# # 调整科学计数法的字体大小
+# ax3[row, col].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+ax3[row, col].yaxis.offsetText.set_fontsize(tick_size)
 
 row = 2
 
-ax3[row, col].plot(data.index, smoothed_yaw_torque)
-ax3[row, col].set_xlabel('control step',loc='right', fontsize=alp_size)
-ax3[row, col].set_ylabel('yaw torque (N$\\cdot$m)', fontsize=alp_size)
+ax3[row, col].plot(data.index/1200, 1e3*smoothed_yaw_torque)
+ax3[row, col].set_xlabel('time(s)',loc='right', fontsize=alp_size)
+ax3[row, col].set_ylabel('yaw torque (N$\\cdot$mm)', fontsize=alp_size)
+ax3[row, col].set_yticks([-0.1,0,0.1])
 ax3[row, col].tick_params(axis='x', labelsize=tick_size )
 ax3[row, col].tick_params(axis='y', labelsize=tick_size )
 # 调整科学计数法的字体大小
-ax3[row, col].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
+# ax3[row, col].ticklabel_format(axis='y', style='sci', scilimits=(0,0))
 ax3[row, col].yaxis.offsetText.set_fontsize(tick_size)
 
 plt.show()

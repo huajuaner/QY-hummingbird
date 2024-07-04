@@ -41,7 +41,7 @@ from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATIO
 from hitsz_qy_hummingbird.base_FWMAV.MAV.base_MAV import BaseMAV
 import numpy as np
 import pybullet_data
-
+import cv2
 
 class BaseMavParellel(BaseMAV):
     """
@@ -103,17 +103,6 @@ class BaseMavParellel(BaseMAV):
         # COV_ENABLE_RGB_BUFFER_PREVIEW：Enable or disable RGB buffer preview.
         # COV_ENABLE_DEPTH_BUFFER_PREVIEW：Enable or disable depth buffer preview.
         # COV_ENABLE_SEGMENTATION_MARK_PREVIEW：Enable or disable segmentation mark preview.
-        self._p.configureDebugVisualizer(self._p.COV_ENABLE_RGB_BUFFER_PREVIEW, 0)
-        self._p.configureDebugVisualizer(self._p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, 0)
-        self._p.configureDebugVisualizer(self._p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, 0)
-
-        self._p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
-        self._p.setGravity(self.params.gravity[0],
-                           self.params.gravity[1],
-                           self.params.gravity[2])
-
-        self._p.loadURDF("plane.urdf")
 
         # URDF_USE_INERTIA_FROM_FILE：By default, Bullet recalculates the inertia tensor based on the mass and volume of the collision shape. 
         # If a more accurate inertia tensor can be provided, use this flag.
@@ -138,30 +127,28 @@ class BaseMavParellel(BaseMAV):
             if sum(inertia) == 0:
                 self.if_valid_urdf = False
 
-        # stepSimulation performs all operations, such as collision detection, constraint solving, and integration, in a single forward dynamics simulation step. 
-        # The default time step is 1/240 seconds, which can be changed using the setTimeStep or setPhysicsEngineParameter API.
-        # The number of solver iterations and the error reduction parameters (erp) for contact, friction, and non-contact joints are related to the time step. 
-        # If you change the time step, you may need to adjust these values accordingly, especially the erp values.
-        self._p.setTimeStep(1 / GLOBAL_CONFIGURATION.TIMESTEP)
-
         # URDF, SDF, and MJCF specify articulated bodies as acyclic tree structures. ‘createConstraint’ allows connecting specific links of the main body to form a closed loop. 
         # Arbitrary constraints can also be created between objects and between objects and a specific world frame.
         # createConstraint returns an integer unique id that can be used to change or delete the constraint.
         self.if_fixed = if_fixed
         if self.if_fixed:
-            self.constraint_id = self._p.createConstraint(self.body_unique_id,
-                                                          parentLinkIndex=-1,
-                                                          childBodyUniqueId=-1,
-                                                          childLinkIndex=-1,
-                                                          jointType=self._p.JOINT_FIXED,
-                                                          jointAxis=[0, 0, 0],
-                                                          parentFramePosition=[0, 0, 0],
-                                                          childFramePosition=self.params.initial_xyz,
-                                                          childFrameOrientation=self.params.initial_orientation)
+            self.constraint_id = self.fix()
 
-        self.camera_follow()
+        # self.camera_follow()
+        self.camera_fix()
         self.change_joint_dynamics()
 
+    def fix(self):
+        self._p.createConstraint(self.body_unique_id,
+                                    parentLinkIndex=-1,
+                                    childBodyUniqueId=-1,
+                                    childLinkIndex=-1,
+                                    jointType=self._p.JOINT_FIXED,
+                                    jointAxis=[0, 0, 0],
+                                    parentFramePosition=[0, 0, 0],
+                                    childFramePosition=self.params.initial_xyz,
+                                    childFrameOrientation=self.params.initial_orientation)
+        
     def change_joint_dynamics(self):
 
         self._p.changeDynamics(self.body_unique_id,
@@ -235,10 +222,67 @@ class BaseMavParellel(BaseMAV):
         the camera should be always targeted at the MAV
         """
         position, orientation = self._p.getBasePositionAndOrientation(self.body_unique_id)
-        self._p.resetDebugVisualizerCamera(cameraDistance=0.5,
+        self._p.resetDebugVisualizerCamera(cameraDistance=0.2,
                                            cameraYaw=120,
-                                           cameraPitch=-20,
+                                           cameraPitch=-30,
                                            cameraTargetPosition=position)
+        
+    # for trac_xy_circle
+    # def camera_fix(self):
+    #     position = [0,0,0]
+    #     self._p.resetDebugVisualizerCamera(cameraDistance=2,
+    #                                  cameraYaw=90,
+    #                                  cameraPitch=-89.999,
+    #                                  cameraTargetPosition=position)
+    # # for y hover
+    # def camera_fix(self):
+    #     position = [0.3,0.3,0.5]
+    #     self._p.resetDebugVisualizerCamera(cameraDistance=0.56,
+    #                                  cameraYaw=110,
+    #                                  cameraPitch=-30,
+    #                                  cameraTargetPosition=position)
+    # # for x hover
+    # def camera_fix(self):
+    #     position = [0.3,0.3,0.75]
+    #     self._p.resetDebugVisualizerCamera(cameraDistance=0.28,
+    #                                  cameraYaw=145,
+    #                                  cameraPitch=-30,
+    #                                  cameraTargetPosition=position)
+    # #for z hover, cubepoints
+    # def camera_fix(self):
+    #     position = [0,0,0.75]
+    #     self._p.resetDebugVisualizerCamera(cameraDistance=0.55,
+    #                                  cameraYaw=145,
+    #                                  cameraPitch=-20,
+    #                                  cameraTargetPosition=position)
+    # # for circlepoints
+    # def camera_fix(self):
+    #     position = [0.1,-0.1,0.75]
+    #     self._p.resetDebugVisualizerCamera(cameraDistance=0.2,
+    #                                     cameraYaw=120,
+    #                                     cameraPitch=-35,
+    #                                     cameraTargetPosition=position)  
+    #for hover
+    def camera_fix(self):
+        position = [1,0,0.55]
+        self._p.resetDebugVisualizerCamera(cameraDistance=0.15,
+                                     cameraYaw=120,
+                                     cameraPitch=-20,
+                                     cameraTargetPosition=position)   
+ 
+    def snapshot(self,pic_path_name):
+        # 设置相机参数
+        width = 1920
+        height = 1080
+        view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=[0, 0, 0.75], distance=0.3, yaw=135, pitch=-20, roll=0, upAxisIndex=2)
+        projection_matrix = self._p.computeProjectionMatrixFOV(fov=60, aspect=float(width) / height, nearVal=0.1, farVal=100.0)
+        # 获取相机图像
+        img = self._p.getCameraImage(width, height, view_matrix, projection_matrix, shadow=True, renderer=self._p.ER_BULLET_HARDWARE_OPENGL)
+        rgb = img[2]
+        # 将图像数据转换为 OpenCV 的 BGR 格式
+        bgr_img = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+        # 保存图像为 PNG 文件
+        cv2.imwrite(pic_path_name, bgr_img)
 
     def step(self):
         """
@@ -246,7 +290,7 @@ class BaseMavParellel(BaseMAV):
         the
         """
         self._p.stepSimulation()
-        self.camera_follow()
+        # self.camera_follow()
         time.sleep(self.params.sleep_time)
         self.joint_state_update()
 
@@ -484,10 +528,10 @@ class BaseMavParellel(BaseMAV):
                                    forceObj=force,
                                    posObj=pos + position_bias,
                                    flags=self._p.WORLD_FRAME)
-        self.draw_a_line(pos + position_bias,
-                         pos + position_bias + force,
-                         [1, 0, 0],
-                         f'{link_id}')
+        # self.draw_a_line(pos + position_bias,
+        #                  pos + position_bias + force,
+        #                  [1, 0, 0],
+        #                  f'{link_id}')
 
     def set_link_torque_world_frame(self,
                                     linkid,
@@ -549,3 +593,6 @@ class BaseMavParellel(BaseMAV):
         """
         for key in list(self.data.keys()):
             self.data[key].clear()
+    
+    def pause(self):
+        time.sleep(self.params.sleep_time)

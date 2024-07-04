@@ -2,8 +2,9 @@
 
 import sys
 
-sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
-from hitsz_qy_hummingbird.envs.rl_hover import RLhover
+sys.path.append('/home/hht/simul0703/QY-hummingbird/')
+
+from hitsz_qy_hummingbird.envs.rl_attitude import RLatt
 from hitsz_qy_hummingbird.configuration import configuration
 from hitsz_qy_hummingbird.base_FWMAV.wings.wing_params import ParamsForBaseWing
 from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATION
@@ -21,7 +22,7 @@ class learn_hover:
     def run(self):
 
         #### Check the environment's spaces ########################
-        env = gym.make("hover-qyhb-v0")
+        env = gym.make("attbody-qyhb-v0")
         print("[INFO] Action space:", env.action_space)
         print("[INFO] Observation space:", env.observation_space)
 
@@ -32,7 +33,7 @@ class learn_hover:
                     )
         model.learn(total_timesteps=10000)  #
 
-        env = RLhover(gui=True)
+        env = RLatt(gui=True)
 
         obs, info = env.reset(seed=7)
 

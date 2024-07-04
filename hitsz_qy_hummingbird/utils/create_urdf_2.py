@@ -1,12 +1,3 @@
-'''
-create urdf through  :                
-                 gear_ratio,
-                 aspect_ratio,
-                 taper_ratio,
-                 r22,
-save as self.urdf_name = f"{GLOBAL_CONFIGURATION.temporary_urdf_path}Ng_{self.gear_ratio}_AR_{self.aspect_ratio}_TR_{self.taper_ratio}_R22_{self.r22}.urdf"           
-'''
-
 import os.path
 
 import pandas as pd
