@@ -2,11 +2,11 @@
 
 import sys
 
-sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
+sys.path.append('/home/hht/simul0703/QY-hummingbird/')
 import os
 from datetime import datetime
 
-from hitsz_qy_hummingbird.envs.rl_hover import RLhover
+from hitsz_qy_hummingbird.envs.rl_attitude import RLatt
 
 import numpy as np
 from stable_baselines3 import PPO

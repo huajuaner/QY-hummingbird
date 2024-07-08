@@ -3,8 +3,8 @@
 from gymnasium.envs.registration import register
 
 register(
-    id='hover-qyhb-v0',
-    entry_point='hitsz_qy_hummingbird.envs.rl_hover:RLhover',
+    id='attbody-qyhb-v0',
+    entry_point='hitsz_qy_hummingbird.envs.rl_att_body:RLattbody',
     kwargs={'gui': True}
 )
 

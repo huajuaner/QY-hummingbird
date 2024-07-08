@@ -2,14 +2,14 @@
 
 import sys
 
-sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
+sys.path.append('/home/hht/simul0703/QY-hummingbird/')
 import os
 import time
 from datetime import datetime
 import matplotlib.pyplot as plt
 from cycler import cycler
 
-from hitsz_qy_hummingbird.envs.rl_hover import RLhover
+from hitsz_qy_hummingbird.envs.rl_att_body import RLattbody
 from hitsz_qy_hummingbird.envs.rl_attitude import RLatt
 from hitsz_qy_hummingbird.envs.rl_flip import RLflip
 from hitsz_qy_hummingbird.envs.rl_escape import RLescape
@@ -26,7 +26,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from stable_baselines3.common.evaluation import evaluate_policy
 
-DEFAULT_OUTPUT_FOLDER = 'results'
+DEFAULT_OUTPUT_FOLDER = 'att_results'
 
 
 class learn_hover_s3():
@@ -58,7 +58,7 @@ class learn_hover_s3():
         model = PPO('MlpPolicy',
                     train_env,
                     batch_size=256, 
-                    gamma=0.98, 
+                    gamma=0.99, 
                     device="cuda",
                     # tensorboard_log=filename+'/tb/',
                     verbose=1)
@@ -76,7 +76,7 @@ class learn_hover_s3():
                                      deterministic=True,
                                      render=False)
 
-        model.learn(total_timesteps=int(1000),
+        model.learn(total_timesteps=int(2e5),
                     callback=eval_callback,
                     log_interval=100)
 
@@ -91,6 +91,7 @@ class learn_hover_s3():
 
 
 if __name__ == "__main__":
+
     configuration.ParamsForMAV_rl.change_parameters(sleep_time=0)
     learn = learn_hover_s3()
-    learn.train(RLhover)
+    learn.train(RLattbody)

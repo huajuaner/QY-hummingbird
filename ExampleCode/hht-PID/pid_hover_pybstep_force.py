@@ -1,4 +1,6 @@
-'''pid_hover records the force of each control step, while this file records the force of each PyBullet step.'''
+'''This file runs the hht-PID control with PIDLinear model when flag_pid=1, and
+runs the manually set voltage when flag_pid=0.
+Record the force info during per pybstep'''
 
 import sys
 
@@ -86,20 +88,6 @@ gradual = 0
 durtime = mav.CTRL_FREQ//20
 while cnt < int (durtime):
 
-    # if (cnt < gradual):
-    #     if flag_pid == 0:
-    #         r_voltage, l_voltage = model.straight_cos()
-    #         r_voltage = r_voltage * cnt / gradual
-    #         l_voltage = l_voltage * cnt / gradual
-    #     else:
-    #         r_voltage, l_voltage = model.predict(obs)
-    #     action = [r_voltage, l_voltage]
-    #     obs, wingobs = mav.step(action=action)
-
-    # if (cnt == gradual):
-    #     print("gradual end obs:\n")
-    #     print(obs)
-
     if (cnt > gradual - 1):
         if flag_pid == 0:
             r_voltage, l_voltage = model.straight_cos()
@@ -110,14 +98,6 @@ while cnt < int (durtime):
 
     f3, t1, t2, t3= forceinfo[2,:],forceinfo[3,:],forceinfo[4,:],forceinfo[5,:]
     print(f3.shape)
-    # data['right_stroke_amp'].append(wingobs[0])
-    # data['left_stroke_amp'].append(wingobs[1])
-    # data['right_stroke_vel'].append(wingobs[2])
-    # data['left_stroke_vel'].append(wingobs[3])
-    # data['r_u'].append(r_voltage)
-    # # data['r_t'].append(r_t)
-    # data['l_u'].append(l_voltage)
-    # # data['l_t'].append(l_t)
     for i in range(f3.shape[0]):
         data['lift_force'].append(-1*f3[i])
         data['roll_torque'].append(t1[i])
@@ -139,7 +119,6 @@ data = pd.DataFrame(
     data
 )
 data.to_csv("tem.csv", index=False)
-
 
 # smoothed_lift_force = medfilt(data['lift_force'], kernel_size=3)
 # smoothed_roll_torque = medfilt(data['roll_torque'], kernel_size=11)

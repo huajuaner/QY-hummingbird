@@ -1,9 +1,8 @@
-"""Continuing training on the old model allows for modifications to the reward function and certain model parameters, 
-but does not permit alterations to the actions and state space."""
-
+'''Continuing training on the old model allows for modifications to the reward function and certain model parameters, 
+but does not permit alterations to the actions and state space.'''
 import sys
 
-sys.path.append('/home/hht/simul20240421/240328git/QY-hummingbird/')
+sys.path.append('/home/hht/simul0703/QY-hummingbird/')
 
 import os
 import time
@@ -11,7 +10,6 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from cycler import cycler
 
-from hitsz_qy_hummingbird.envs.rl_hover import RLhover
 from hitsz_qy_hummingbird.envs.rl_attitude import RLatt
 from hitsz_qy_hummingbird.envs.rl_flip import RLflip
 from hitsz_qy_hummingbird.envs.rl_escape import RLescape
@@ -33,7 +31,7 @@ DEFAULT_OUTPUT_FOLDER = 'att_results'
 class LearnHoverS3():
     def __init__(self):
         self.output_folder = DEFAULT_OUTPUT_FOLDER
-        self.infilename = os.path.join(self.output_folder, 'save-04.23.2024_22.44.56')
+        self.infilename = os.path.join(self.output_folder, 'save-05.04.2024_12.10.54')
         self.outfilename = os.path.join(self.output_folder, 'save-' + datetime.now().strftime("%m.%d.%Y_%H.%M.%S"))
         if not os.path.exists(self.outfilename):
             os.makedirs(self.outfilename+'/')
@@ -43,7 +41,7 @@ class LearnHoverS3():
         self.model = PPO.load(self.infilename+'/best_model.zip',
                               env=env_s,
                               batch_size=512, 
-                              gamma=0.99, 
+                              gamma=0.995, 
                               device="cuda",)
 
     
@@ -77,7 +75,7 @@ class LearnHoverS3():
                                      deterministic=True,
                                      render=False)
         
-        self.model.learn(total_timesteps=int(3e7),
+        self.model.learn(total_timesteps=int(5e7),
                          callback=eval_callback,
                          log_interval=100)
 
