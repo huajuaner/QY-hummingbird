@@ -2,14 +2,14 @@
 
 import sys
 
-sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
+sys.path.append('/home/hht/simul0703/QY-hummingbird/')
 import os
 import time
 from datetime import datetime
 import matplotlib.pyplot as plt
 from cycler import cycler
 
-from hitsz_qy_hummingbird.envs.rl_hover import RLhover
+from hitsz_qy_hummingbird.envs.rl_att_body import RLattbody
 from hitsz_qy_hummingbird.envs.rl_attitude import RLatt
 from hitsz_qy_hummingbird.envs.rl_flip import RLflip
 from hitsz_qy_hummingbird.envs.rl_escape import RLescape
@@ -21,12 +21,16 @@ from hitsz_qy_hummingbird.configuration.configuration import GLOBAL_CONFIGURATIO
 import gymnasium as gym
 import numpy as np
 from stable_baselines3 import PPO
+from stable_baselines3 import DDPG
+from stable_baselines3 import A2C
+from stable_baselines3 import SAC
+from sb3_contrib import RecurrentPPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from stable_baselines3.common.evaluation import evaluate_policy
 
-DEFAULT_OUTPUT_FOLDER = 'results'
+DEFAULT_OUTPUT_FOLDER = 'att_results'
 
 
 class learn_hover_s3():
@@ -41,12 +45,12 @@ class learn_hover_s3():
 
         train_env = make_vec_env(my_env,
                                  n_envs=20,
-                                 seed=0,
+                                 seed=None,
                                  vec_env_cls=SubprocVecEnv,
                                  )
         eval_env = make_vec_env(my_env,
                                 n_envs=20,
-                                seed=0,
+                                seed=None,
                                 vec_env_cls=SubprocVecEnv,
                                 )
 
@@ -55,12 +59,19 @@ class learn_hover_s3():
         print('[INFO] Observation space:', train_env.observation_space)
 
         #### Train the model #######################################
-        model = PPO('MlpPolicy',
+        # model = PPO('MlpPolicy',
+        #             train_env,
+        #             batch_size=512, 
+        #             gamma=0.99, 
+        #             device="cuda",
+        #             # tensorboard_log=filename+'/tb/',
+        #             verbose=1)
+        model = SAC('MlpPolicy',
                     train_env,
-                    batch_size=256, 
-                    gamma=0.98, 
+                    batch_size=256,  # SAC 的默认批量大小
+                    learning_rate=3e-4,  # SAC 默认学习率
+                    gamma=0.99,
                     device="cuda",
-                    # tensorboard_log=filename+'/tb/',
                     verbose=1)
 
         target_reward = 1e10
@@ -76,7 +87,7 @@ class learn_hover_s3():
                                      deterministic=True,
                                      render=False)
 
-        model.learn(total_timesteps=int(1000),
+        model.learn(total_timesteps=int(5e7),
                     callback=eval_callback,
                     log_interval=100)
 
@@ -91,6 +102,7 @@ class learn_hover_s3():
 
 
 if __name__ == "__main__":
+
     configuration.ParamsForMAV_rl.change_parameters(sleep_time=0)
     learn = learn_hover_s3()
-    learn.train(RLhover)
+    learn.train(RLattbody)

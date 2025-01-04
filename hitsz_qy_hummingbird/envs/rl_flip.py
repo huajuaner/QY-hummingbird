@@ -1,6 +1,6 @@
 import sys
 
-sys.path.append('D://graduate//fwmav//simul2024//240325git//QY-hummingbird')
+sys.path.append('/home/hht/simul0703/QY-hummingbird/')
 from hitsz_qy_hummingbird.wrapper.wrapped_mav_for_RL import RLMAV
 from hitsz_qy_hummingbird.configuration import configuration
 
